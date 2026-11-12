@@ -740,63 +740,37 @@ export default function Home() {
       </section>
 
       {/* KONTAK */}
-      <section id="kontak" className="gpro-container pb-16 gpro-section">
+      <section id="kontak" className="gpro-container gpro-section">
         <div data-reveal className="gpro-reveal">
-          <div className="rounded-3xl p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
-            <h2 className="text-xl font-bold" style={{ color: textMain }}>Ajukan kolaborasi</h2>
-            <p className="mt-2 max-w-3xl text-sm" style={{ color: textSub }}>
-              Klik tombol di bawah untuk mengisi form singkat. Setelah itu otomatis bisa terkirim ke WhatsApp.
-            </p>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={() => setOpenModal(true)}
-                className="gpro-shine inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                style={{ backgroundColor: COLORS.red }}
-              >
-                Buka Form Kolaborasi
-              </button>
-
-              <button
-                onClick={() => copyText(BRAND.email, "Email disalin!")}
-                className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
-                style={{ borderColor: COLORS.blue, color: textMain, backgroundColor: card }}
-              >
-                Salin Email
-              </button>
-
-              <button
-                onClick={() => copyText(BRAND.waPretty, "Nomor WA disalin!")}
-                className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
-                style={{ borderColor: border, color: textMain, backgroundColor: card }}
-              >
-                Salin WA
-              </button>
+          <div className="rounded-3xl p-8 lg:p-12" style={{border:`1px solid ${border}`,backgroundColor:card}}>
+            <h2 className="text-3xl font-extrabold lg:text-4xl" style={{color:textMain}}>Ajukan kolaborasi</h2>
+            <p className="mt-3 max-w-3xl text-base leading-7" style={{color:textSub}}>Diskusikan kebutuhan kajian, dokumen kebijakan, dan roadmap implementasi bersama GPro.</p>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <button className="gpro-btn gpro-btn-primary gpro-btn-lg" onClick={()=>setOpenModal(true)}>Buka Form Kolaborasi</button>
+              <a className="gpro-btn gpro-btn-secondary gpro-btn-lg" href={waLink} target="_blank" rel="noopener noreferrer">Chat WhatsApp</a>
+              <a className="gpro-btn gpro-btn-ghost gpro-btn-lg" href={`mailto:${BRAND.email}`}>Kirim Email</a>
             </div>
-
-            <p className="mt-7 text-sm" style={{ color: textSub }}>
-              © {new Date().getFullYear()} {BRAND.full}. Hak cipta dilindungi.
-            </p>
           </div>
         </div>
       </section>
+      <footer className="gpro-container pb-28 pt-16" style={{color:textSub}}>
+        <div className="grid gap-8 border-t pt-8 md:grid-cols-3" style={{borderColor:border}}>
+          <div><p className="text-xl font-bold" style={{color:textMain}}>{BRAND.full}</p><p className="mt-2 text-base leading-7">Pusat kajian strategis berbasis data untuk kebijakan yang dapat dilaksanakan.</p></div>
+          <div><p className="font-bold" style={{color:textMain}}>Navigasi</p><nav className="mt-3 flex flex-col gap-2">{([["Tentang","#tentang"],["Publikasi","#publikasi"],["Portofolio","#portofolio"],["Layanan","#layanan"],["Kontak","#kontak"]] as const).map(([label,href])=><a key={href} href={href} className="hover:underline">{label}</a>)}</nav></div>
+          <div><p className="font-bold" style={{color:textMain}}>Kontak</p><a className="mt-3 block hover:underline" href={waLink} target="_blank" rel="noopener noreferrer">{BRAND.waPretty}</a><a className="mt-2 block hover:underline" href={`mailto:${BRAND.email}`}>{BRAND.email}</a></div>
+        </div>
+        <p className="mt-10 border-t pt-6 text-sm" style={{borderColor:border}}>© {new Date().getFullYear()} {BRAND.full}. Hak cipta dilindungi.</p>
+      </footer>
 
       {/* FLOATING WHATSAPP */}
-      <a
-        href={waLink} target="_blank" rel="noopener noreferrer"
-        className="gpro-shine fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-        style={{ backgroundColor: COLORS.red }}
-        aria-label="Chat WhatsApp"
-      >
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
-          <span className="text-base">💬</span>
-        </span>
-        Chat WhatsApp
+      <a href={waLink} target="_blank" rel="noopener noreferrer" className="fixed bottom-5 right-5 z-50 flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#168943] px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-1" style={{bottom:"max(20px, env(safe-area-inset-bottom))"}} aria-label="Chat WhatsApp">
+        <svg aria-hidden="true" viewBox="0 0 32 32" width="24" height="24" fill="currentColor"><path d="M16 2a14 14 0 0 0-12 21.1L2 30l7.1-1.9A14 14 0 1 0 16 2Zm0 25.5a11.4 11.4 0 0 1-5.8-1.6l-.4-.2-4.2 1.1 1.1-4.1-.3-.4A11.5 11.5 0 1 1 16 27.5Zm6.3-8.6c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a9.5 9.5 0 0 1-4.7-4.1c-.4-.6.4-.6.9-1.6.1-.2 0-.5 0-.7l-1-2.4c-.3-.7-.5-.6-.7-.6h-.6c-.3 0-.7.1-1 .5s-1.3 1.3-1.3 3.1 1.4 3.6 1.6 3.8 3.2 4.8 5.8 6.4c2.1 1.2 3 1.3 4.1 1.2.7-.1 2.1-.9 2.4-1.8s.3-1.7.2-1.8-.3-.3-.6-.4Z"/></svg>
+        <span className="hidden sm:inline">Chat WhatsApp</span>
       </a>
 
       {/* TOAST */}
       {toast ? (
-        <div className="fixed bottom-20 left-1/2 z-[70] -translate-x-1/2">
+        <div className="fixed bottom-24 left-1/2 z-[70] -translate-x-1/2">
           <div
             className="rounded-full px-4 py-2 text-sm font-semibold shadow-lg"
             style={{
