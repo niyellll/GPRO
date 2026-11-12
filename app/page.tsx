@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import type { CSSProperties } from "react";
 
 type WorkItem = {
@@ -218,6 +219,23 @@ export default function Home() {
     window.addEventListener("keydown",trap);
     return ()=>{document.body.style.overflow=prev;window.removeEventListener("keydown",trap);};
   },[openModal]);
+  useEffect(() => {
+    if (!openModal) return;
+    const prev = document.body.style.overflow;
+    const trigger = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+    document.getElementById("gpro-form-name")?.focus();
+    const trap=(e:KeyboardEvent)=>{
+      if(e.key!=="Tab")return;
+      const nodes=document.querySelectorAll<HTMLElement>('[role="dialog"] button:not([disabled]), [role="dialog"] input:not([disabled]), [role="dialog"] select:not([disabled]), [role="dialog"] textarea:not([disabled])');
+      if(!nodes.length)return;
+      const a=nodes[0],b=nodes[nodes.length-1];
+      if(e.shiftKey&&document.activeElement===a){e.preventDefault();b.focus();}
+      else if(!e.shiftKey&&document.activeElement===b){e.preventDefault();a.focus();}
+    };
+    window.addEventListener("keydown",trap);
+    return ()=>{document.body.style.overflow=prev;window.removeEventListener("keydown",trap);trigger?.focus();};
+  },[openModal]);
   // ===== SCROLL REVEAL (konsisten) =====
   useEffect(() => {
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -284,14 +302,7 @@ export default function Home() {
               style={{ border: `1px solid ${border}`, backgroundColor: card }}
             >
               {/* kalau belum ada logo.png, aman: dia akan hide otomatis */}
-              <img
-                src="/logo.png"
-                alt="GPro Logo"
-                className="h-full w-full object-contain"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
+              <Image src="/logo.png" alt="Logo GPro" width={56} height={56} className="h-full w-full object-contain" priority />
             </div>
             <div className="leading-tight">
               <p className="text-sm font-bold" style={{ color: textMain }}>
@@ -460,15 +471,7 @@ export default function Home() {
             }}
             title={p.name}
           >
-            <img
-              src={p.src}
-              alt={p.name}
-              className="h-10 w-auto object-contain opacity-90 transition hover:opacity-100"
-              onError={(e) => {
-                // kalau file belum ada / salah nama → biar tidak bikin blank aneh
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
+            <Image src={p.src} alt={p.name} width={160} height={50} className="h-12 w-auto max-w-full object-contain opacity-90 transition hover:opacity-100" />
           </a>
         ))}
       </div>
@@ -798,14 +801,14 @@ export default function Home() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold" style={{ color: textSub }}>Form Kolaborasi</p>
-                <h3 id="gpro-dialog-title" className="mt-1 text-xl font-bold" style={{ color: textMain }}>Ajukan Kolaborasi</h3>
+                <h3 id="gpro-dialog-title" id="gpro-dialog-title" className="mt-1 text-xl font-bold" style={{ color: textMain }}>Ajukan Kolaborasi</h3>
                 <p className="mt-2 text-sm" style={{ color: textSub }}>
                   Isi singkat saja. Setelah itu klik <b>Kirim ke WhatsApp</b>.
                 </p>
               </div>
               <button
                 onClick={() => setOpenModal(false)}
-                className="rounded-xl px-3 py-2 text-sm font-semibold transition hover:opacity-90"
+                aria-label="Tutup formulir" className="gpro-btn gpro-btn-ghost gpro-icon-btn"
                 style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
               >
                 ✕
@@ -817,14 +820,14 @@ export default function Home() {
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  id="gpro-form-name" aria-label="Nama" autoComplete="name" placeholder="Nama"
+                  id="gpro-form-name" aria-label="Nama" autoComplete="name" id="gpro-form-name" aria-label="Nama" autoComplete="name" placeholder="Nama"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
                 <input
                   value={form.org}
                   onChange={(e) => setForm({ ...form, org: e.target.value })}
-                  aria-label="Organisasi atau instansi" autoComplete="organization" placeholder="Organisasi / Instansi"
+                  aria-label="Organisasi atau instansi" autoComplete="organization" aria-label="Organisasi atau instansi" autoComplete="organization" placeholder="Organisasi / Instansi"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
@@ -847,7 +850,7 @@ export default function Home() {
                 <input
                   value={form.deadline}
                   onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-                  aria-label="Tenggat waktu" placeholder="Deadline (contoh: 20 Feb / minggu ini)"
+                  aria-label="Tenggat waktu" aria-label="Tenggat waktu" placeholder="Deadline (contoh: 20 Feb / minggu ini)"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
@@ -856,12 +859,13 @@ export default function Home() {
               <textarea
                 value={form.detail}
                 onChange={(e) => setForm({ ...form, detail: e.target.value })}
-                aria-label="Detail kebutuhan" placeholder="Ceritakan singkat kebutuhan kamu…"
+                aria-label="Detail kebutuhan" aria-label="Detail kebutuhan" placeholder="Ceritakan singkat kebutuhan kamu…"
                 rows={4}
                 className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                 style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
               />
 
+              {formError && <p role="alert" className="text-sm font-semibold" style={{color:COLORS.red}}>{formError}</p>}
               {formError && <p role="alert" className="text-sm font-semibold" style={{color:COLORS.red}}>{formError}</p>}
               <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm" style={{ color: textSub }}>
@@ -877,7 +881,7 @@ export default function Home() {
                     Batal
                   </button>
                   <button
-                    onClick={sendToWhatsApp} disabled={!form.name.trim() || !form.detail.trim()}
+                    onClick={sendToWhatsApp} disabled={!form.name.trim() || !form.detail.trim()} disabled={!form.name.trim() || !form.detail.trim()}
                     className="gpro-shine rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
                     style={{ backgroundColor: COLORS.red }}
                   >
