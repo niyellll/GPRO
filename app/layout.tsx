@@ -6,7 +6,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://nextjs-boilerplate-nine-bay-67.vercel.app"),
+  metadataBase: new URL("https://gpro-niyellll.vercel.app"),
   title: "GPro — Pusat Kajian Strategis",
   description: "Global Pro-eksistensi: kajian strategis, policy brief, peta analitik, dan roadmap kebijakan berbasis data untuk keputusan yang dapat dijalankan.",
   openGraph: {
