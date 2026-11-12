@@ -827,7 +827,7 @@ export default function Home() {
                 <input
                   value={form.org}
                   onChange={(e) => setForm({ ...form, org: e.target.value })}
-                  aria-label="Organisasi atau instansi" autoComplete="organization" aria-label="Organisasi atau instansi" autoComplete="organization" placeholder="Organisasi / Instansi"
+                  aria-label="Organisasi atau instansi" autoComplete="organization" placeholder="Organisasi / Instansi"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
@@ -881,7 +881,7 @@ export default function Home() {
                     Batal
                   </button>
                   <button
-                    onClick={sendToWhatsApp} disabled={!form.name.trim() || !form.detail.trim()} disabled={!form.name.trim() || !form.detail.trim()}
+                    onClick={sendToWhatsApp} disabled={!form.name.trim() || !form.detail.trim()}
                     className="gpro-shine rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
                     style={{ backgroundColor: COLORS.red }}
                   >
