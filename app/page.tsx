@@ -801,7 +801,7 @@ export default function Home() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold" style={{ color: textSub }}>Form Kolaborasi</p>
-                <h3 id="gpro-dialog-title" id="gpro-dialog-title" className="mt-1 text-xl font-bold" style={{ color: textMain }}>Ajukan Kolaborasi</h3>
+                <h3 id="gpro-dialog-title" className="mt-1 text-xl font-bold" style={{ color: textMain }}>Ajukan Kolaborasi</h3>
                 <p className="mt-2 text-sm" style={{ color: textSub }}>
                   Isi singkat saja. Setelah itu klik <b>Kirim ke WhatsApp</b>.
                 </p>
@@ -820,7 +820,7 @@ export default function Home() {
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  id="gpro-form-name" aria-label="Nama" autoComplete="name" id="gpro-form-name" aria-label="Nama" autoComplete="name" placeholder="Nama"
+                  id="gpro-form-name" aria-label="Nama" autoComplete="name" placeholder="Nama"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
