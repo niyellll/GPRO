@@ -355,10 +355,10 @@ export default function Home() {
                   rantai pasok, biaya ekonomi, kemiskinan, dan edukasi—dengan bahasa yang mudah dipahami dan keluaran yang siap dipakai.
                 </p>
 
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <div className="mt-8 flex flex-col gap-3 xl:flex-row">
                   <a
                     href="#publikasi"
-                    className="gpro-shine inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                    className="gpro-btn gpro-btn-secondary gpro-btn-lg w-full xl:w-auto"
                     style={{ backgroundColor: COLORS.red }}
                   >
                     Lihat Publikasi
@@ -366,7 +366,7 @@ export default function Home() {
 
                   <button
                     onClick={() => setOpenModal(true)}
-                    className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
+                    className="gpro-btn gpro-btn-primary gpro-btn-lg w-full xl:w-auto"
                     style={{ borderColor: COLORS.blue, color: textMain, backgroundColor: card }}
                   >
                     Ajukan Kolaborasi
@@ -539,49 +539,13 @@ export default function Home() {
                 Diskusi awal paling cepat lewat WhatsApp. Email untuk kebutuhan dokumen formal.
               </p>
 
-              <div className="mt-4 flex flex-col gap-2">
-                <a
-                  href={waLink} target="_blank" rel="noopener noreferrer"
-                  className="gpro-shine rounded-xl px-4 py-2 text-center text-sm font-semibold text-white transition hover:opacity-90"
-                  style={{ backgroundColor: COLORS.red }}
-                >
-                  WhatsApp: {BRAND.waPretty}
-                </a>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => copyText(BRAND.waPretty, "Nomor WA disalin!")}
-                    className="w-1/2 rounded-xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
-                    style={{ borderColor: COLORS.blue, backgroundColor: card, color: textMain }}
-                  >
-                    Salin WA
-                  </button>
-                  <button
-                    onClick={() => setOpenModal(true)}
-                    className="w-1/2 rounded-xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
-                    style={{ borderColor: border, backgroundColor: card, color: textMain }}
-                  >
-                    Form
-                  </button>
-                </div>
-
-                <a
-                  href={`mailto:${BRAND.email}`}
-                  className="rounded-xl border px-4 py-2 text-center text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
-                  style={{ borderColor: COLORS.blue, color: textMain, backgroundColor: card }}
-                >
-                  Email: {BRAND.email}
-                </a>
-
-                <button
-                  onClick={() => copyText(BRAND.email, "Email disalin!")}
-                  className="rounded-xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
-                  style={{ borderColor: border, backgroundColor: card, color: textMain }}
-                >
-                  Salin Email
-                </button>
+              <div className="mt-6 space-y-3">
+                <a href={waLink} target="_blank" rel="noopener noreferrer" className="gpro-btn gpro-btn-primary w-full">Chat WhatsApp</a>
+                <p className="text-center text-sm" style={{color:textSub}}>{BRAND.waPretty}</p>
+                <a href={`mailto:${BRAND.email}`} className="gpro-btn gpro-btn-secondary w-full">Kirim Email</a>
+                <div className="grid grid-cols-2 gap-3"><button className="gpro-btn gpro-btn-ghost" onClick={()=>copyText(BRAND.waPretty,"Nomor WA disalin!")}>Salin Nomor WA</button><button className="gpro-btn gpro-btn-ghost" onClick={()=>copyText(BRAND.email,"Email disalin!")}>Salin Email</button></div>
+                <button className="w-full text-center text-sm font-semibold underline underline-offset-4" style={{color:COLORS.red}} onClick={()=>setOpenModal(true)}>Atau isi form kolaborasi</button>
               </div>
-
               <div className="mt-5 rounded-2xl p-4" style={{ backgroundColor: `${COLORS.blue}${dark ? "10" : "14"}` }}>
                 <p className="text-sm font-semibold" style={{ color: textMain }}>Cara kolaborasi (singkat)</p>
                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm" style={{ color: textSub }}>
@@ -694,18 +658,18 @@ export default function Home() {
         <div data-reveal className="gpro-reveal">
           <SectionTitle title="Portofolio" desc="Pilih kategori untuk melihat karya yang relevan." />
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex snap-x gap-2 overflow-x-auto pb-3">
             {categories.map((c) => {
               const activeBtn = active === c;
               return (
                 <button
                   key={c}
                   onClick={() => setActive(c)}
-                  className="rounded-full border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
+                  aria-pressed={activeBtn} className="min-h-11 shrink-0 snap-start rounded-full border px-4 py-2 text-sm font-semibold transition hover:shadow-sm"
                   style={{
                     borderColor: activeBtn ? COLORS.red : border,
-                    backgroundColor: activeBtn ? `${COLORS.red}18` : card,
-                    color: activeBtn ? textMain : textSub,
+                    backgroundColor: activeBtn ? COLORS.red : card,
+                    color: activeBtn ? "#fff" : textSub,
                   }}
                 >
                   {c}
@@ -716,7 +680,7 @@ export default function Home() {
 
           <div className="mt-6 grid gap-6 lg:gap-8 md:grid-cols-2">
             {filteredWorks.map((w) => (
-              <div key={w.title} className="gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+              <div key={w.title} className="gpro-card flex h-full flex-col rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-bold" style={{ color: textMain }}>{w.title}</p>
                   <span className="shrink-0 rounded-full border px-3 py-1 text-sm" style={{ ...chipStyle, color: textMain }}>
@@ -742,9 +706,9 @@ export default function Home() {
                   ))}
                 </div>
 
-                <div className="mt-5 flex items-center justify-between">
+                <div className="mt-auto flex items-center justify-between gap-3 pt-6">
                   <span className="text-sm font-semibold" style={{ color: textSub }}>Kategori: {w.category}</span>
-                  <button className="text-sm font-semibold" style={{ color: COLORS.red }} onClick={() => setOpenModal(true)}>
+                  <button className="gpro-btn gpro-btn-ghost" onClick={() => setOpenModal(true)}>
                     Kolaborasi →
                   </button>
                 </div>
