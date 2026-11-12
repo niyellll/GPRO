@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import ImageSlot from "@/components/ImageSlot";
 import SectionTitle from "@/components/SectionTitle";
@@ -12,18 +12,19 @@ export default function Home() {
   const [dark, setDark] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [formError, setFormError] = useState("");
+  const themeReady = useRef(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("gpro-theme");
-    if (saved === "dark") setDark(true);
-    else if (saved === "light") setDark(false);
-    else {
-      const prefers = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-      setDark(Boolean(prefers));
-    }
+    // The inline head script already applied the saved preference before hydration.
+    const frame = requestAnimationFrame(() => {
+      themeReady.current = true;
+      setDark(document.documentElement.classList.contains("dark"));
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
+    if (!themeReady.current) return;
     localStorage.setItem("gpro-theme", dark ? "dark" : "light");
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
