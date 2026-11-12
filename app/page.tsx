@@ -19,28 +19,123 @@ type Publication = {
   url: string;
 };
 
+// ===== BRAND / KONTAK =====
+const BRAND = {
+  short: "GPro",
+  full: "Global Pro-eksistensi",
+  subtitle: "Pusat Kajian Strategis • Policy • Data • Peta • Roadmap",
+  waPlain: "6285899993742",
+  waPretty: "+62 858-9999-3742",
+  waUrl: "https://wa.me/6285899993742",
+  email: "pksgpro@gmail.com",
+};
+
+// ===== WARNA (dari logo) =====
+const COLORS = {
+  red: "#D00705",
+  blue: "#7DB4CE",
+  ink: "#493D58",
+  soft: "#F8FAFD",
+};
+
+
+// ===== DATA =====
+const works: WorkItem[] = [
+  {
+    title: "Kediri sebagai Hub Logistik 2045",
+    category: "Logistik",
+    tag: "Logistik • 2045",
+    summary:
+      "Riset & argumentasi kebijakan untuk transformasi Kediri sebagai hub logistik nasional–global, lengkap dengan roadmap strategi.",
+    outputs: ["Policy brief", "Roadmap", "Kerangka rantai pasok"],
+    featured: true,
+  },
+  {
+    title: "Bandara Dhoho: konektivitas & dampak ekonomi",
+    category: "Logistik",
+    tag: "Aviation • Logistics",
+    summary:
+      "Rancangan konektivitas bandara–transportasi dan simulasi dampak ekonomi (penumpang & kargo) untuk memperkuat posisi kawasan.",
+    outputs: ["Proposal teknis", "Simulasi dampak", "Strategi koordinasi"],
+  },
+  {
+    title: "Mengapa biaya logistik tidak turun meski PSN dibangun?",
+    category: "PSN",
+    tag: "PSN • Ekonomi",
+    summary:
+      "Membedah akar penyebab biaya logistik tetap tinggi dan menyusun rekomendasi perbaikan yang bisa dieksekusi.",
+    outputs: ["Dokumen evaluatif", "Infografik", "Rekomendasi transisi mikro"],
+  },
+  {
+    title: "Bottleneck kawasan industri: macet–polusi–kesehatan",
+    category: "Kesehatan",
+    tag: "Kota • Kesehatan",
+    summary:
+      "Pemetaan zona risiko kesehatan dan strategi intervensi berbasis zona untuk menurunkan dampak ISPA & stres akibat kemacetan.",
+    outputs: ["Peta risiko", "Memo kebijakan", "Toolkit edukasi 1 halaman"],
+  },
+  {
+    title: "Early-Warning Poverty Framework (BPS & PPP)",
+    category: "Kemiskinan",
+    tag: "Kemiskinan • Perencanaan",
+    summary:
+      "Kerangka peringatan dini kemiskinan untuk penajaman program, prioritas wilayah, dan perencanaan kebijakan strategis.",
+    outputs: ["Framework indikator", "Skema integrasi", "Rekomendasi implementasi"],
+  },
+  {
+    title: "Risiko ekspor: standar global & transisi hijau",
+    category: "Trade",
+    tag: "Trade Policy • Risiko",
+    summary:
+      "Kajian risiko sektor ekspor dan strategi mitigasi dalam konteks perubahan standar global dan dinamika perdagangan.",
+    outputs: ["Policy memo", "Peta risiko sektor", "Strategi transisi hijau"],
+  },
+  {
+    title: "Kurikulum berbasis PISA untuk SMK",
+    category: "Edukasi",
+    tag: "Pendidikan • Kurikulum",
+    summary:
+      "Pengembangan kurikulum literasi–numerasi–sains terapan untuk siswa SMK, dengan struktur yang mudah diterapkan.",
+    outputs: ["Outline kurikulum", "Modul ringkas", "Toolkit pembelajaran"],
+  },
+];
+
+const publications: Publication[] = [
+  {
+    title: "Policy Brief — Hub Logistik Kediri 2045",
+    type: "PDF",
+    desc: "Ringkasan kebijakan + roadmap strategi.",
+    url: "",
+  },
+  {
+    title: "Peta Analitik — Bottleneck Kawasan Industri",
+    type: "Peta",
+    desc: "Visual zona risiko & intervensi.",
+    url: "",
+  },
+  {
+    title: "Toolkit — Edukasi ISPA & Stres Kemacetan (1 halaman)",
+    type: "Toolkit",
+    desc: "Materi edukasi publik ringkas.",
+    url: "",
+  },
+  {
+    title: "Deck — Evaluasi PSN & Biaya Logistik",
+    type: "Slide",
+    desc: "Materi presentasi stakeholder.",
+    url: "",
+  },
+];
+
+
+function SectionTitle({ title, desc }: { title: string; desc?: string }) {
+return <div className="mb-8 lg:mb-10"><h2 className="text-3xl font-extrabold tracking-tight lg:text-4xl" style={{color:"var(--gpro-text)"}}>{title}</h2>{desc && <p className="mt-3 max-w-4xl text-base leading-7 lg:text-lg" style={{color:"var(--gpro-sub)"}}>{desc}</p>}</div>;
+}
 export default function Home() {
-  // ===== BRAND / KONTAK =====
-  const BRAND = {
-    short: "GPro",
-    full: "Global Pro-eksistensi",
-    subtitle: "Pusat Kajian Strategis • Policy • Data • Peta • Roadmap",
-    waPlain: "6285899993742",
-    waPretty: "+62 858-9999-3742",
-    waUrl: "https://wa.me/6285899993742",
-    email: "pksgpro@gmail.com",
-  };
-
-  // ===== WARNA (dari logo) =====
-  const COLORS = {
-    red: "#D00705",
-    blue: "#7DB4CE",
-    ink: "#493D58",
-    soft: "#F8FAFD",
-  };
-
   // ===== THEME =====
   const [dark, setDark] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem("gpro-theme");
@@ -108,20 +203,26 @@ export default function Home() {
   });
 
   const sendToWhatsApp = () => {
-    const msg =
-      `Halo GPro, saya ingin kolaborasi.%0A%0A` +
-      `Nama: ${encodeURIComponent(form.name)}%0A` +
-      `Organisasi: ${encodeURIComponent(form.org)}%0A` +
-      `Kebutuhan: ${encodeURIComponent(form.need)}%0A` +
-      `Deadline: ${encodeURIComponent(form.deadline)}%0A` +
-      `Detail: ${encodeURIComponent(form.detail)}%0A`;
-    window.open(`${BRAND.waUrl}?text=${msg}`, "_blank");
+    if (!form.name.trim() || !form.detail.trim()) {setFormError("Isi nama dan jelaskan kebutuhan terlebih dahulu.");return;}
+    setFormError("");
+    const msg = ["Halo GPro, saya ingin kolaborasi.", "", "Nama: "+form.name.trim(), "Organisasi: "+(form.org||"-"), "Kebutuhan: "+form.need, "Deadline: "+(form.deadline||"-"), "Detail: "+form.detail.trim()].join("\n");
+    window.open(BRAND.waUrl+"?text="+encodeURIComponent(msg), "_blank", "noopener,noreferrer");
+    setOpenModal(false);
   };
-
+  const waLink = BRAND.waUrl + "?text=" + encodeURIComponent("Halo GPro, saya ingin berdiskusi tentang kolaborasi.");
+  useEffect(() => {
+    if (!openModal) return;
+    const prev=document.body.style.overflow; document.body.style.overflow="hidden";
+    document.getElementById("gpro-form-name")?.focus();
+    const trap=(e:KeyboardEvent)=>{ if(e.key!=="Tab")return; const nodes=document.querySelectorAll<HTMLElement>('[role="dialog"] button:not([disabled]), [role="dialog"] input:not([disabled]), [role="dialog"] select:not([disabled]), [role="dialog"] textarea:not([disabled])');if(!nodes.length)return;const a=nodes[0],b=nodes[nodes.length-1]; if(e.shiftKey&&document.activeElement===a){e.preventDefault();b.focus();}else if(!e.shiftKey&&document.activeElement===b){e.preventDefault();a.focus();}};
+    window.addEventListener("keydown",trap);
+    return ()=>{document.body.style.overflow=prev;window.removeEventListener("keydown",trap);};
+  },[openModal]);
   // ===== SCROLL REVEAL (konsisten) =====
   useEffect(() => {
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const els = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+    document.documentElement.classList.add("js");
 
     if (reduceMotion) {
       els.forEach((el) => el.classList.add("gpro-reveal-in"));
@@ -143,111 +244,10 @@ export default function Home() {
     return () => io.disconnect();
   }, []);
 
-  const SectionTitle = ({ title, desc }: { title: string; desc?: string }) => (
-    <div className="mb-6">
-      <h2 className="text-xl font-extrabold tracking-tight" style={{ color: textMain }}>
-        {title}
-      </h2>
-      {desc ? (
-        <p className="mt-2 max-w-3xl text-sm leading-6" style={{ color: textSub }}>
-          {desc}
-        </p>
-      ) : null}
-    </div>
-  );
-
   const chipStyle: CSSProperties = {
     borderColor: COLORS.blue,
     backgroundColor: `${COLORS.blue}12`,
   };
-
-  // ===== DATA =====
-  const works: WorkItem[] = [
-    {
-      title: "Kediri sebagai Hub Logistik 2045",
-      category: "Logistik",
-      tag: "Logistik • 2045",
-      summary:
-        "Riset & argumentasi kebijakan untuk transformasi Kediri sebagai hub logistik nasional–global, lengkap dengan roadmap strategi.",
-      outputs: ["Policy brief", "Roadmap", "Kerangka rantai pasok"],
-      featured: true,
-    },
-    {
-      title: "Bandara Dhoho: konektivitas & dampak ekonomi",
-      category: "Logistik",
-      tag: "Aviation • Logistics",
-      summary:
-        "Rancangan konektivitas bandara–transportasi dan simulasi dampak ekonomi (penumpang & kargo) untuk memperkuat posisi kawasan.",
-      outputs: ["Proposal teknis", "Simulasi dampak", "Strategi koordinasi"],
-    },
-    {
-      title: "Mengapa biaya logistik tidak turun meski PSN dibangun?",
-      category: "PSN",
-      tag: "PSN • Ekonomi",
-      summary:
-        "Membedah akar penyebab biaya logistik tetap tinggi dan menyusun rekomendasi perbaikan yang bisa dieksekusi.",
-      outputs: ["Dokumen evaluatif", "Infografik", "Rekomendasi transisi mikro"],
-    },
-    {
-      title: "Bottleneck kawasan industri: macet–polusi–kesehatan",
-      category: "Kesehatan",
-      tag: "Kota • Kesehatan",
-      summary:
-        "Pemetaan zona risiko kesehatan dan strategi intervensi berbasis zona untuk menurunkan dampak ISPA & stres akibat kemacetan.",
-      outputs: ["Peta risiko", "Memo kebijakan", "Toolkit edukasi 1 halaman"],
-    },
-    {
-      title: "Early-Warning Poverty Framework (BPS & PPP)",
-      category: "Kemiskinan",
-      tag: "Kemiskinan • Perencanaan",
-      summary:
-        "Kerangka peringatan dini kemiskinan untuk penajaman program, prioritas wilayah, dan perencanaan kebijakan strategis.",
-      outputs: ["Framework indikator", "Skema integrasi", "Rekomendasi implementasi"],
-    },
-    {
-      title: "Risiko ekspor: standar global & transisi hijau",
-      category: "Trade",
-      tag: "Trade Policy • Risiko",
-      summary:
-        "Kajian risiko sektor ekspor dan strategi mitigasi dalam konteks perubahan standar global dan dinamika perdagangan.",
-      outputs: ["Policy memo", "Peta risiko sektor", "Strategi transisi hijau"],
-    },
-    {
-      title: "Kurikulum berbasis PISA untuk SMK",
-      category: "Edukasi",
-      tag: "Pendidikan • Kurikulum",
-      summary:
-        "Pengembangan kurikulum literasi–numerasi–sains terapan untuk siswa SMK, dengan struktur yang mudah diterapkan.",
-      outputs: ["Outline kurikulum", "Modul ringkas", "Toolkit pembelajaran"],
-    },
-  ];
-
-  const publications: Publication[] = [
-    {
-      title: "Policy Brief — Hub Logistik Kediri 2045",
-      type: "PDF",
-      desc: "Ringkasan kebijakan + roadmap strategi (ganti dengan link PDF kamu).",
-      url: "https://example.com/kediri-policy-brief.pdf",
-    },
-    {
-      title: "Peta Analitik — Bottleneck Kawasan Industri",
-      type: "Peta",
-      desc: "Visual zona risiko & intervensi (ganti dengan link peta/file kamu).",
-      url: "https://example.com/peta-bottleneck.png",
-    },
-    {
-      title: "Toolkit — Edukasi ISPA & Stres Kemacetan (1 halaman)",
-      type: "Toolkit",
-      desc: "Materi edukasi publik ringkas (ganti dengan link toolkit kamu).",
-      url: "https://example.com/toolkit-ispa.pdf",
-    },
-    {
-      title: "Deck — Evaluasi PSN & Biaya Logistik",
-      type: "Slide",
-      desc: "Materi presentasi stakeholder (ganti dengan link slide kamu).",
-      url: "https://example.com/deck-psn.pptx",
-    },
-  ];
 
   const categories = ["Semua", "Logistik", "PSN", "Kesehatan", "Kemiskinan", "Trade", "Edukasi"] as const;
   const [active, setActive] = useState<(typeof categories)[number]>("Semua");
@@ -255,90 +255,13 @@ export default function Home() {
   const filteredWorks = useMemo(() => {
     if (active === "Semua") return works;
     return works.filter((w) => w.category === active);
-  }, [active, works]);
+  }, [active]);
 
-  const featured = useMemo(() => works.find((w) => w.featured) ?? works[0], [works]);
+  const featured = works.find((w) => w.featured) ?? works[0];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: bg }}>
-      {/* GLOBAL CSS untuk animasi premium + shine + gradient subtle */}
-      <style jsx global>{`
-        .gpro-reveal {
-          opacity: 0;
-          transform: translateY(14px);
-          transition: opacity 700ms ease, transform 700ms ease;
-        }
-        .gpro-reveal.gpro-reveal-in {
-          opacity: 1;
-          transform: translateY(0);
-        }
 
-        .gpro-card {
-          transition: transform 250ms ease, box-shadow 250ms ease;
-        }
-        .gpro-card:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
-        }
-        .dark .gpro-card:hover {
-          box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
-        }
-
-        .gpro-shine {
-          position: relative;
-          overflow: hidden;
-        }
-        .gpro-shine::before {
-          content: "";
-          position: absolute;
-          top: -40%;
-          left: -30%;
-          width: 40%;
-          height: 200%;
-          background: linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0) 0%,
-            rgba(255, 255, 255, 0.35) 50%,
-            rgba(255, 255, 255, 0) 100%
-          );
-          transform: translateX(-120%) rotate(10deg);
-          transition: transform 700ms ease;
-        }
-        .gpro-shine:hover::before {
-          transform: translateX(380%) rotate(10deg);
-        }
-
-        .gpro-animated-gradient {
-          background: linear-gradient(
-            120deg,
-            rgba(125, 180, 206, 0.22),
-            rgba(208, 7, 5, 0.14),
-            rgba(125, 180, 206, 0.18)
-          );
-          background-size: 220% 220%;
-          animation: gproGradient 14s ease-in-out infinite;
-        }
-        .dark .gpro-animated-gradient {
-          background: linear-gradient(
-            120deg,
-            rgba(125, 180, 206, 0.14),
-            rgba(208, 7, 5, 0.10),
-            rgba(125, 180, 206, 0.12)
-          );
-          background-size: 220% 220%;
-        }
-        @keyframes gproGradient {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
-      `}</style>
 
       {/* BACKGROUND SUBTLE MOVING GRADIENT */}
       <div className="pointer-events-none fixed inset-0 -z-10 opacity-70">
@@ -354,10 +277,10 @@ export default function Home() {
         }}
         
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="gpro-container flex h-20 items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div
-              className="h-11 w-11 overflow-hidden rounded-2xl"
+              className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
               style={{ border: `1px solid ${border}`, backgroundColor: card }}
             >
               {/* kalau belum ada logo.png, aman: dia akan hide otomatis */}
@@ -374,11 +297,11 @@ export default function Home() {
               <p className="text-sm font-bold" style={{ color: textMain }}>
                 {BRAND.short} <span className="font-medium" style={{ color: textSub }}>— {BRAND.full}</span>
               </p>
-              <p className="text-xs" style={{ color: textSub }}>{BRAND.subtitle}</p>
+              <p className="text-sm" style={{ color: textSub }}>{BRAND.subtitle}</p>
             </div>
           </div>
 
-          <nav className="hidden items-center gap-6 text-sm md:flex" style={{ color: textSub }}>
+          <nav className="hidden items-center gap-5 text-base font-medium lg:flex" style={{ color: textSub }}>
             <a className="hover:opacity-80" href="#tentang">Tentang</a>
             <a className="hover:opacity-80" href="#publikasi">Publikasi</a>
             <a className="hover:opacity-80" href="#portofolio">Portofolio</a>
@@ -387,32 +310,25 @@ export default function Home() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setDark((v) => !v)}
-              className="rounded-xl px-3 py-2 text-sm font-semibold transition hover:opacity-90"
-              style={{ border: `1px solid ${border}`, backgroundColor: card, color: textMain }}
-              aria-label="Toggle dark mode"
-              title="Dark mode"
-            >
-              {dark ? "🌙" : "☀️"}
-            </button>
-
+            <button onClick={() => setDark(v=>!v)} className="gpro-btn gpro-btn-ghost gpro-icon-btn" aria-label="Ubah tema"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">{dark ? <><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/></> : <path d="M20.985 12.486a9 9 0 1 1-9.47-9.47 7 7 0 0 0 9.47 9.47Z"/>}</svg></button>
+            <button onClick={()=>setMobileMenu(v=>!v)} className="gpro-btn gpro-btn-ghost gpro-icon-btn lg:hidden" aria-label={mobileMenu?"Tutup menu":"Buka menu"} aria-expanded={mobileMenu} aria-controls="gpro-mobile-nav"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={mobileMenu?"M6 6l12 12M18 6L6 18":"M4 6h16M4 12h16M4 18h16"}/></svg></button>
             <button
               onClick={() => setOpenModal(true)}
-              className="gpro-shine rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+              className="gpro-btn gpro-btn-primary hidden sm:inline-flex"
               style={{ backgroundColor: COLORS.red }}
             >
               Ajukan Kolaborasi
             </button>
           </div>
         </div>
+        {mobileMenu && <nav id="gpro-mobile-nav" className="gpro-container flex flex-col gap-1 border-t py-4 lg:hidden" style={{backgroundColor:card,borderColor:border}}>{([["Tentang","#tentang"],["Publikasi","#publikasi"],["Portofolio","#portofolio"],["Layanan","#layanan"],["Kontak","#kontak"]] as const).map(([label,href])=><a key={href} href={href} className="rounded-xl px-4 py-3 font-semibold" onClick={()=>setMobileMenu(false)} style={{color:textMain}}>{label}</a>)}<button className="gpro-btn gpro-btn-primary" onClick={()=>{setMobileMenu(false);setOpenModal(true)}}>Ajukan Kolaborasi</button></nav>}
       </header>
 
       {/* HERO */}
-      <section className="mx-auto max-w-6xl px-6 pt-12">
+      <section className="gpro-container pt-20 lg:pt-28">
         <div data-reveal className="gpro-reveal">
           <div
-            className="relative overflow-hidden rounded-3xl p-8"
+            className="relative min-h-[78vh] overflow-hidden rounded-3xl p-8 sm:p-12 lg:p-16"
             style={{
               border: `1px solid ${border}`,
               background: dark
@@ -420,17 +336,17 @@ export default function Home() {
                 : `linear-gradient(135deg, ${COLORS.blue}22 0%, #ffffff 45%, ${COLORS.red}14 100%)`,
             }}
           >
-            <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+            <div className="grid items-center gap-8 lg:grid-cols-[1.35fr_1fr] lg:gap-12">
               <div className="max-w-3xl">
                 <div
-                  className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold"
                   style={{ border: `1px solid ${border}`, backgroundColor: card, color: textSub }}
                 >
                   <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.red }} />
                   STRATEGI • KEBIJAKAN • DATA • PETA • ROADMAP
                 </div>
 
-                <h1 className="mt-4 text-3xl font-extrabold leading-tight md:text-5xl" style={{ color: textMain }}>
+                <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl" style={{ color: textMain }}>
                   Membuat isu kompleks jadi keputusan yang jelas dan bisa dieksekusi.
                 </h1>
 
@@ -457,7 +373,7 @@ export default function Home() {
                   </button>
 
                   <a
-                    href={BRAND.waUrl}
+                    href={waLink} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
                     style={{ borderColor: border, color: textMain, backgroundColor: card }}
                   >
@@ -467,9 +383,9 @@ export default function Home() {
               </div>
 
               {/* Featured */}
-              <div className="w-full md:w-[420px]">
-                <div className="gpro-card rounded-2xl p-6" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
-                  <p className="text-xs font-semibold" style={{ color: textSub }}>Featured work</p>
+              <div className="min-w-0">
+                <div className="gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+                  <p className="text-sm font-semibold" style={{ color: textSub }}>Karya unggulan</p>
                   <p className="mt-2 text-sm font-bold" style={{ color: textMain }}>{featured.title}</p>
                   <p className="mt-2 text-sm" style={{ color: textSub }}>{featured.summary}</p>
 
@@ -477,7 +393,7 @@ export default function Home() {
                     {featured.outputs.map((o) => (
                       <span
                         key={o}
-                        className="rounded-full border px-3 py-1 text-xs"
+                        className="rounded-full border px-3 py-1 text-sm"
                         style={{ borderColor: COLORS.blue, color: textMain, backgroundColor: `${COLORS.blue}12` }}
                       >
                         {o}
@@ -486,7 +402,7 @@ export default function Home() {
                   </div>
 
                   <div className="mt-5 flex items-center justify-between">
-                    <span className="text-xs font-semibold" style={{ color: textSub }}>{featured.tag}</span>
+                    <span className="text-sm font-semibold" style={{ color: textSub }}>{featured.tag}</span>
                     <a href="#portofolio" className="text-sm font-semibold" style={{ color: COLORS.red }}>
                       Lihat semua →
                     </a>
@@ -496,7 +412,7 @@ export default function Home() {
             </div>
 
             {/* proof strip */}
-            <div className="mt-8 grid gap-4 md:grid-cols-4">
+            <div className="mt-8 grid gap-6 lg:gap-8 md:grid-cols-4">
               {[
                 { t: "Berbasis data", d: "Sumber publik & asumsi transparan." },
                 { t: "Output siap pakai", d: "Rapi untuk rapat/advokasi." },
@@ -514,15 +430,16 @@ export default function Home() {
       </section>
 
       {/* PARTNER / REFERENSI STRIP */}
-<section className="mx-auto max-w-6xl px-6 pt-12">
+<section className="gpro-container pt-20 lg:pt-28">
   <div data-reveal className="gpro-reveal">
     <div
       className="rounded-3xl p-6"
       style={{ border: `1px solid ${border}`, backgroundColor: card }}
     >
       <p className="text-sm font-semibold" style={{ color: textMain }}>
-        Our Partner
+        Rujukan data & riset kami
       </p>
+      <p className="mt-2 text-base" style={{color:textSub}}>Logo milik masing-masing lembaga. GPro merujuk publikasi publik mereka sebagai sumber riset, bukan pernyataan kemitraan resmi.</p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
         {[
@@ -561,22 +478,22 @@ export default function Home() {
 
 
       {/* TENTANG */}
-      <section id="tentang" className="mx-auto max-w-6xl px-6 pt-14 scroll-mt-24">
+      <section id="tentang" className="gpro-container gpro-section">
         <div data-reveal className="gpro-reveal">
           <SectionTitle
             title="Tentang GPro"
             desc="GPro (Global Pro-eksistensi) adalah pusat kajian strategis yang membantu organisasi dan pemangku kepentingan mengubah isu rumit menjadi keputusan yang jelas. Fokus kami bukan sekadar “analisis”, tapi menyusun arah, prioritas, dan langkah eksekusi—dengan bahasa yang mudah dipahami dan output yang siap dipakai."
           />
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="md:col-span-2 gpro-card rounded-2xl p-6" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+          <div className="grid gap-6 lg:gap-8 md:grid-cols-3">
+            <div className="md:col-span-2 gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
               <p className="text-sm font-semibold" style={{ color: textSub }}>
                 Apa yang GPro kerjakan
               </p>
               <h3 className="mt-2 text-lg font-bold" style={{ color: textMain }}>
                 Dari diagnosis masalah → opsi kebijakan → roadmap eksekusi.
               </h3>
-              <p className="mt-3 text-sm leading-6" style={{ color: textSub }}>
+              <p className="mt-3 text-base leading-7" style={{ color: textSub }}>
                 Banyak kajian berhenti di “penjelasan masalah”. GPro melangkah lebih jauh: merumuskan pertanyaan yang tepat,
                 mengubah data menjadi insight yang bisa dipertanggungjawabkan, lalu menyusun pilihan solusi beserta langkah
                 implementasi (aktor, tahapan, risiko, dan mitigasinya). Tujuannya sederhana: supaya keputusan bisa diambil lebih
@@ -587,7 +504,7 @@ export default function Home() {
                 {["Policy brief", "Peta analitik", "Roadmap", "Infografik", "Toolkit 1 halaman", "Deck presentasi"].map((x) => (
                   <span
                     key={x}
-                    className="rounded-full border px-3 py-1 text-xs"
+                    className="rounded-full border px-3 py-1 text-sm"
                     style={{ borderColor: COLORS.blue, backgroundColor: `${COLORS.blue}12`, color: textMain }}
                   >
                     {x}
@@ -616,7 +533,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="gpro-card rounded-2xl p-6" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+            <div className="gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
               <p className="text-sm font-bold" style={{ color: textMain }}>Kontak cepat</p>
               <p className="mt-2 text-sm" style={{ color: textSub }}>
                 Diskusi awal paling cepat lewat WhatsApp. Email untuk kebutuhan dokumen formal.
@@ -624,7 +541,7 @@ export default function Home() {
 
               <div className="mt-4 flex flex-col gap-2">
                 <a
-                  href={BRAND.waUrl}
+                  href={waLink} target="_blank" rel="noopener noreferrer"
                   className="gpro-shine rounded-xl px-4 py-2 text-center text-sm font-semibold text-white transition hover:opacity-90"
                   style={{ backgroundColor: COLORS.red }}
                 >
@@ -637,7 +554,7 @@ export default function Home() {
                     className="w-1/2 rounded-xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
                     style={{ borderColor: COLORS.blue, backgroundColor: card, color: textMain }}
                   >
-                    Copy WA
+                    Salin WA
                   </button>
                   <button
                     onClick={() => setOpenModal(true)}
@@ -661,13 +578,13 @@ export default function Home() {
                   className="rounded-xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
                   style={{ borderColor: border, backgroundColor: card, color: textMain }}
                 >
-                  Copy Email
+                  Salin Email
                 </button>
               </div>
 
               <div className="mt-5 rounded-2xl p-4" style={{ backgroundColor: `${COLORS.blue}${dark ? "10" : "14"}` }}>
-                <p className="text-xs font-semibold" style={{ color: textMain }}>Cara kolaborasi (singkat)</p>
-                <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs" style={{ color: textSub }}>
+                <p className="text-sm font-semibold" style={{ color: textMain }}>Cara kolaborasi (singkat)</p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm" style={{ color: textSub }}>
                   <li>Diskusi kebutuhan (WA)</li>
                   <li>Ruang lingkup & output disepakati</li>
                   <li>Draft → review → final</li>
@@ -676,15 +593,15 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="mt-4 grid gap-6 lg:gap-8 md:grid-cols-3">
             {[
               { t: "Fokus kajian", d: "Logistik & rantai pasok, biaya ekonomi, kemiskinan, kesehatan bottleneck perkotaan, serta edukasi." },
               { t: "Gaya komunikasi", d: "Bahasa sederhana, struktur jelas, dan visual yang membantu rapat/advokasi." },
               { t: "Hasil yang diharapkan", d: "Stakeholder memahami isu, punya opsi keputusan, dan punya rute eksekusi yang realistis." },
             ].map((x) => (
-              <div key={x.t} className="gpro-card rounded-2xl p-6" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+              <div key={x.t} className="gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
                 <p className="text-sm font-bold" style={{ color: textMain }}>{x.t}</p>
-                <p className="mt-2 text-sm leading-6" style={{ color: textSub }}>{x.d}</p>
+                <p className="mt-2 text-base leading-7" style={{ color: textSub }}>{x.d}</p>
               </div>
             ))}
           </div>
@@ -692,34 +609,26 @@ export default function Home() {
       </section>
 
       {/* PUBLIKASI */}
-      <section id="publikasi" className="mx-auto max-w-6xl px-6 pt-14 scroll-mt-24">
+      <section id="publikasi" className="gpro-container gpro-section">
         <div data-reveal className="gpro-reveal">
           <SectionTitle
             title="Publikasi & Produk"
-            desc="Dokumen/peta/toolkit yang bisa diunduh. (Sementara link masih contoh — nanti kamu tinggal ganti URL-nya.)"
+            desc="Dokumen dan produk kajian GPro. Materi yang belum tersedia publik dapat diminta melalui form."
           />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-6 lg:gap-8 md:grid-cols-2">
             {publications.map((p) => (
-              <div key={p.title} className="gpro-card rounded-2xl p-6" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+              <div key={p.title} className="gpro-card flex h-full flex-col rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-bold" style={{ color: textMain }}>{p.title}</p>
-                  <span className="rounded-full border px-3 py-1 text-xs font-semibold" style={{ ...chipStyle, color: textMain }}>
+                  <span className="rounded-full border px-3 py-1 text-sm font-semibold" style={{ ...chipStyle, color: textMain }}>
                     {p.type}
                   </span>
                 </div>
                 <p className="mt-2 text-sm" style={{ color: textSub }}>{p.desc}</p>
 
-                <div className="mt-5 flex gap-3">
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="gpro-shine inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                    style={{ backgroundColor: COLORS.red }}
-                  >
-                    Unduh / Lihat
-                  </a>
+                <div className="mt-auto flex flex-wrap gap-3 pt-6">
+                  {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="gpro-btn gpro-btn-primary">Unduh / Lihat</a> : <button className="gpro-btn gpro-btn-primary" onClick={() => setOpenModal(true)}>Minta dokumen</button>}
                   <button
                     onClick={() => setOpenModal(true)}
                     className="inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
@@ -734,8 +643,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA SECTION (yang kamu minta) */}
-      <section className="mx-auto max-w-6xl px-6 pt-14">
+      {/* AJAKAN KOLABORASI */}
+      <section className="gpro-container pt-14">
         <div data-reveal className="gpro-reveal">
           <div
             className="rounded-3xl p-8"
@@ -748,7 +657,7 @@ export default function Home() {
           >
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="max-w-3xl">
-                <p className="text-xs font-semibold" style={{ color: textSub }}>CTA</p>
+                <p className="text-sm font-semibold" style={{ color: textSub }}>Kolaborasi strategis</p>
                 <h3 className="mt-2 text-2xl font-extrabold" style={{ color: textMain }}>
                   Butuh policy brief cepat yang rapi dan siap rapat?
                 </h3>
@@ -761,7 +670,7 @@ export default function Home() {
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <a
-                  href={BRAND.waUrl}
+                  href={waLink} target="_blank" rel="noopener noreferrer"
                   className="gpro-shine inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                   style={{ backgroundColor: COLORS.red }}
                 >
@@ -781,7 +690,7 @@ export default function Home() {
       </section>
 
       {/* PORTOFOLIO */}
-      <section id="portofolio" className="mx-auto max-w-6xl px-6 pt-14 scroll-mt-24">
+      <section id="portofolio" className="gpro-container gpro-section">
         <div data-reveal className="gpro-reveal">
           <SectionTitle title="Portofolio" desc="Pilih kategori untuk melihat karya yang relevan." />
 
@@ -805,12 +714,12 @@ export default function Home() {
             })}
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-6 grid gap-6 lg:gap-8 md:grid-cols-2">
             {filteredWorks.map((w) => (
-              <div key={w.title} className="gpro-card rounded-2xl p-6" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+              <div key={w.title} className="gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-bold" style={{ color: textMain }}>{w.title}</p>
-                  <span className="shrink-0 rounded-full border px-3 py-1 text-xs" style={{ ...chipStyle, color: textMain }}>
+                  <span className="shrink-0 rounded-full border px-3 py-1 text-sm" style={{ ...chipStyle, color: textMain }}>
                     {w.tag}
                   </span>
                 </div>
@@ -821,7 +730,7 @@ export default function Home() {
                   {w.outputs.map((o) => (
                     <span
                       key={o}
-                      className="rounded-full border px-3 py-1 text-xs"
+                      className="rounded-full border px-3 py-1 text-sm"
                       style={{
                         borderColor: border,
                         backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#FAFAFA",
@@ -834,7 +743,7 @@ export default function Home() {
                 </div>
 
                 <div className="mt-5 flex items-center justify-between">
-                  <span className="text-xs font-semibold" style={{ color: textSub }}>Kategori: {w.category}</span>
+                  <span className="text-sm font-semibold" style={{ color: textSub }}>Kategori: {w.category}</span>
                   <button className="text-sm font-semibold" style={{ color: COLORS.red }} onClick={() => setOpenModal(true)}>
                     Kolaborasi →
                   </button>
@@ -846,20 +755,20 @@ export default function Home() {
       </section>
 
       {/* LAYANAN */}
-      <section id="layanan" className="mx-auto max-w-6xl px-6 pt-14 scroll-mt-24">
+      <section id="layanan" className="gpro-container gpro-section">
         <div data-reveal className="gpro-reveal">
           <SectionTitle title="Layanan" desc="Format output yang biasa disiapkan untuk stakeholder dan kolaborator." />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-6 lg:gap-8 md:grid-cols-2">
             {[
               { t: "Policy Brief & Memo", d: "Dokumen ringkas, jelas, siap dipakai rapat/advokasi." },
               { t: "Peta Analitik & Visual", d: "Peta/infografik stakeholder-friendly, metodologi transparan." },
               { t: "Roadmap Implementasi", d: "Tahapan kerja, prioritas, timeline, aktor, risiko, langkah eksekusi." },
               { t: "Deck Presentasi", d: "Materi presentasi profesional yang singkat, tajam, rapi." },
             ].map((x) => (
-              <div key={x.t} className="gpro-card rounded-2xl p-6" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+              <div key={x.t} className="gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
                 <p className="text-sm font-bold" style={{ color: textMain }}>{x.t}</p>
-                <p className="mt-2 text-sm leading-6" style={{ color: textSub }}>{x.d}</p>
+                <p className="mt-2 text-base leading-7" style={{ color: textSub }}>{x.d}</p>
               </div>
             ))}
           </div>
@@ -867,7 +776,7 @@ export default function Home() {
       </section>
 
       {/* KONTAK */}
-      <section id="kontak" className="mx-auto max-w-6xl px-6 pb-16 pt-14 scroll-mt-24">
+      <section id="kontak" className="gpro-container pb-16 gpro-section">
         <div data-reveal className="gpro-reveal">
           <div className="rounded-3xl p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
             <h2 className="text-xl font-bold" style={{ color: textMain }}>Ajukan kolaborasi</h2>
@@ -889,7 +798,7 @@ export default function Home() {
                 className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
                 style={{ borderColor: COLORS.blue, color: textMain, backgroundColor: card }}
               >
-                Copy Email
+                Salin Email
               </button>
 
               <button
@@ -897,12 +806,12 @@ export default function Home() {
                 className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
                 style={{ borderColor: border, color: textMain, backgroundColor: card }}
               >
-                Copy WA
+                Salin WA
               </button>
             </div>
 
-            <p className="mt-7 text-xs" style={{ color: textSub }}>
-              © {new Date().getFullYear()} {BRAND.full}. All rights reserved.
+            <p className="mt-7 text-sm" style={{ color: textSub }}>
+              © {new Date().getFullYear()} {BRAND.full}. Hak cipta dilindungi.
             </p>
           </div>
         </div>
@@ -910,7 +819,7 @@ export default function Home() {
 
       {/* FLOATING WHATSAPP */}
       <a
-        href={BRAND.waUrl}
+        href={waLink} target="_blank" rel="noopener noreferrer"
         className="gpro-shine fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
         style={{ backgroundColor: COLORS.red }}
         aria-label="Chat WhatsApp"
@@ -947,11 +856,11 @@ export default function Home() {
             aria-label="Close modal"
           />
 
-          <div className="relative w-full max-w-xl rounded-3xl p-6 shadow-2xl" style={{ backgroundColor: card, border: `1px solid ${border}` }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="gpro-dialog-title" className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl p-6 shadow-2xl" style={{ backgroundColor: card, border: `1px solid ${border}` }}>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold" style={{ color: textSub }}>Form Kolaborasi</p>
-                <h3 className="mt-1 text-xl font-bold" style={{ color: textMain }}>Ajukan Kolaborasi</h3>
+                <h3 id="gpro-dialog-title" className="mt-1 text-xl font-bold" style={{ color: textMain }}>Ajukan Kolaborasi</h3>
                 <p className="mt-2 text-sm" style={{ color: textSub }}>
                   Isi singkat saja. Setelah itu klik <b>Kirim ke WhatsApp</b>.
                 </p>
@@ -970,14 +879,14 @@ export default function Home() {
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Nama"
+                  id="gpro-form-name" aria-label="Nama" autoComplete="name" placeholder="Nama"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
                 <input
                   value={form.org}
                   onChange={(e) => setForm({ ...form, org: e.target.value })}
-                  placeholder="Organisasi / Instansi"
+                  aria-label="Organisasi atau instansi" autoComplete="organization" placeholder="Organisasi / Instansi"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
@@ -1000,7 +909,7 @@ export default function Home() {
                 <input
                   value={form.deadline}
                   onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-                  placeholder="Deadline (contoh: 20 Feb / minggu ini)"
+                  aria-label="Tenggat waktu" placeholder="Deadline (contoh: 20 Feb / minggu ini)"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
@@ -1009,14 +918,15 @@ export default function Home() {
               <textarea
                 value={form.detail}
                 onChange={(e) => setForm({ ...form, detail: e.target.value })}
-                placeholder="Ceritakan singkat kebutuhan kamu…"
+                aria-label="Detail kebutuhan" placeholder="Ceritakan singkat kebutuhan kamu…"
                 rows={4}
                 className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                 style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
               />
 
+              {formError && <p role="alert" className="text-sm font-semibold" style={{color:COLORS.red}}>{formError}</p>}
               <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs" style={{ color: textSub }}>
+                <p className="text-sm" style={{ color: textSub }}>
                   Tips: isi minimal <b>nama</b> + <b>kebutuhan</b> biar cepat diproses.
                 </p>
 
@@ -1029,7 +939,7 @@ export default function Home() {
                     Batal
                   </button>
                   <button
-                    onClick={sendToWhatsApp}
+                    onClick={sendToWhatsApp} disabled={!form.name.trim() || !form.detail.trim()}
                     className="gpro-shine rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
                     style={{ backgroundColor: COLORS.red }}
                   >
@@ -1040,8 +950,8 @@ export default function Home() {
             </div>
 
             <div className="mt-5 rounded-2xl p-4" style={{ backgroundColor: `${COLORS.blue}${dark ? "10" : "14"}` }}>
-              <p className="text-xs font-semibold" style={{ color: textMain }}>Catatan:</p>
-              <p className="mt-1 text-xs" style={{ color: textSub }}>
+              <p className="text-sm font-semibold" style={{ color: textMain }}>Catatan:</p>
+              <p className="mt-1 text-sm" style={{ color: textSub }}>
                 Tutup modal: klik area gelap atau tekan <b>Esc</b>.
               </p>
             </div>
