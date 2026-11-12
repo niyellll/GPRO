@@ -278,7 +278,7 @@ export default function Home() {
   const featured = works.find((w) => w.featured) ?? works[0];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bg }}>
+    <div className="min-h-screen overflow-x-clip" style={{ backgroundColor: bg }}>
 
 
       {/* BACKGROUND SUBTLE MOVING GRADIENT */}
@@ -296,19 +296,19 @@ export default function Home() {
         
       >
         <div className="gpro-container flex h-20 items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <div
-              className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
+              className="h-11 w-11 shrink-0 overflow-hidden rounded-2xl sm:h-14 sm:w-14"
               style={{ border: `1px solid ${border}`, backgroundColor: card }}
             >
               {/* kalau belum ada logo.png, aman: dia akan hide otomatis */}
               <Image src="/logo.png" alt="Logo GPro" width={56} height={56} className="h-full w-full object-contain" priority />
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-bold" style={{ color: textMain }}>
-                {BRAND.short} <span className="font-medium" style={{ color: textSub }}>— {BRAND.full}</span>
+              <p className="truncate text-sm font-bold sm:text-base" style={{ color: textMain }}>
+                {BRAND.short} <span className="hidden font-medium sm:inline" style={{ color: textSub }}>— {BRAND.full}</span>
               </p>
-              <p className="text-sm" style={{ color: textSub }}>{BRAND.subtitle}</p>
+              <p className="hidden text-sm lg:block" style={{ color: textSub }}>{BRAND.subtitle}</p>
             </div>
           </div>
 
@@ -320,7 +320,7 @@ export default function Home() {
             <a className="hover:opacity-80" href="#kontak">Kontak</a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button onClick={() => setDark(v=>!v)} className="gpro-btn gpro-btn-ghost gpro-icon-btn" aria-label="Ubah tema"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">{dark ? <><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/></> : <path d="M20.985 12.486a9 9 0 1 1-9.47-9.47 7 7 0 0 0 9.47 9.47Z"/>}</svg></button>
             <button onClick={()=>setMobileMenu(v=>!v)} className="gpro-btn gpro-btn-ghost gpro-icon-btn lg:hidden" aria-label={mobileMenu?"Tutup menu":"Buka menu"} aria-expanded={mobileMenu} aria-controls="gpro-mobile-nav"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={mobileMenu?"M6 6l12 12M18 6L6 18":"M4 6h16M4 12h16M4 18h16"}/></svg></button>
             <button
