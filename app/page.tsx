@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import ImageSlot from "@/components/ImageSlot";
 import type { CSSProperties } from "react";
 
 type WorkItem = {
@@ -213,14 +214,6 @@ export default function Home() {
   const waLink = BRAND.waUrl + "?text=" + encodeURIComponent("Halo GPro, saya ingin berdiskusi tentang kolaborasi.");
   useEffect(() => {
     if (!openModal) return;
-    const prev=document.body.style.overflow; document.body.style.overflow="hidden";
-    document.getElementById("gpro-form-name")?.focus();
-    const trap=(e:KeyboardEvent)=>{ if(e.key!=="Tab")return; const nodes=document.querySelectorAll<HTMLElement>('[role="dialog"] button:not([disabled]), [role="dialog"] input:not([disabled]), [role="dialog"] select:not([disabled]), [role="dialog"] textarea:not([disabled])');if(!nodes.length)return;const a=nodes[0],b=nodes[nodes.length-1]; if(e.shiftKey&&document.activeElement===a){e.preventDefault();b.focus();}else if(!e.shiftKey&&document.activeElement===b){e.preventDefault();a.focus();}};
-    window.addEventListener("keydown",trap);
-    return ()=>{document.body.style.overflow=prev;window.removeEventListener("keydown",trap);};
-  },[openModal]);
-  useEffect(() => {
-    if (!openModal) return;
     const prev = document.body.style.overflow;
     const trigger = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
@@ -301,7 +294,6 @@ export default function Home() {
               className="h-11 w-11 shrink-0 overflow-hidden rounded-2xl sm:h-14 sm:w-14"
               style={{ border: `1px solid ${border}`, backgroundColor: card }}
             >
-              {/* kalau belum ada logo.png, aman: dia akan hide otomatis */}
               <Image src="/logo.png" alt="Logo GPro" width={56} height={56} className="h-full w-full object-contain" priority />
             </div>
             <div className="leading-tight">
@@ -370,7 +362,6 @@ export default function Home() {
                   <a
                     href="#publikasi"
                     className="gpro-btn gpro-btn-secondary gpro-btn-lg w-full xl:w-auto"
-                    style={{ backgroundColor: COLORS.red }}
                   >
                     Lihat Publikasi
                   </a>
@@ -378,15 +369,13 @@ export default function Home() {
                   <button
                     onClick={() => setOpenModal(true)}
                     className="gpro-btn gpro-btn-primary gpro-btn-lg w-full xl:w-auto"
-                    style={{ borderColor: COLORS.blue, color: textMain, backgroundColor: card }}
                   >
                     Ajukan Kolaborasi
                   </button>
 
                   <a
                     href={waLink} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
-                    style={{ borderColor: border, color: textMain, backgroundColor: card }}
+                    className="gpro-btn gpro-btn-ghost gpro-btn-lg w-full xl:w-auto"
                   >
                     Chat WhatsApp
                   </a>
@@ -395,6 +384,7 @@ export default function Home() {
 
               {/* Featured */}
               <div className="min-w-0">
+                <ImageSlot alt="Visual utama kajian strategis GPro" ratio="video" className="mb-5" />
                 <div className="gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
                   <p className="text-sm font-semibold" style={{ color: textSub }}>Karya unggulan</p>
                   <p className="mt-2 text-sm font-bold" style={{ color: textMain }}>{featured.title}</p>
@@ -490,6 +480,7 @@ export default function Home() {
 
           <div className="grid gap-6 lg:gap-8 md:grid-cols-3">
             <div className="md:col-span-2 gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+              <ImageSlot alt="Foto tim kajian GPro" ratio="landscape" className="mb-6 max-h-64" />
               <p className="text-sm font-semibold" style={{ color: textSub }}>
                 Apa yang GPro kerjakan
               </p>
@@ -567,7 +558,8 @@ export default function Home() {
               { t: "Hasil yang diharapkan", d: "Stakeholder memahami isu, punya opsi keputusan, dan punya rute eksekusi yang realistis." },
             ].map((x) => (
               <div key={x.t} className="gpro-card rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
-                <p className="text-sm font-bold" style={{ color: textMain }}>{x.t}</p>
+                <ImageSlot alt={`Ilustrasi layanan ${x.t}`} ratio="landscape" className="mb-5" />
+                <p className="text-lg font-bold" style={{ color: textMain }}>{x.t}</p>
                 <p className="mt-2 text-base leading-7" style={{ color: textSub }}>{x.d}</p>
               </div>
             ))}
@@ -583,11 +575,12 @@ export default function Home() {
             desc="Dokumen dan produk kajian GPro. Materi yang belum tersedia publik dapat diminta melalui form."
           />
 
-          <div className="grid gap-6 lg:gap-8 md:grid-cols-2">
+          <div className="grid gap-6 lg:gap-8 lg:grid-cols-2 xl:grid-cols-2">
             {publications.map((p) => (
               <div key={p.title} className="gpro-card flex h-full flex-col rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+                <ImageSlot alt={`Sampul publikasi ${p.title}`} ratio="video" className="mb-5" />
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-bold" style={{ color: textMain }}>{p.title}</p>
+                  <p className="text-lg font-bold" style={{ color: textMain }}>{p.title}</p>
                   <span className="rounded-full border px-3 py-1 text-sm font-semibold" style={{ ...chipStyle, color: textMain }}>
                     {p.type}
                   </span>
@@ -596,13 +589,13 @@ export default function Home() {
 
                 <div className="mt-auto flex flex-wrap gap-3 pt-6">
                   {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="gpro-btn gpro-btn-primary">Unduh / Lihat</a> : <button className="gpro-btn gpro-btn-primary" onClick={() => setOpenModal(true)}>Minta dokumen</button>}
-                  <button
+                  {p.url && <button
                     onClick={() => setOpenModal(true)}
                     className="inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
                     style={{ borderColor: COLORS.blue, color: textMain, backgroundColor: card }}
                   >
                     Minta versi lengkap
-                  </button>
+                  </button>}
                 </div>
               </div>
             ))}
@@ -681,11 +674,12 @@ export default function Home() {
             })}
           </div>
 
-          <div className="mt-6 grid gap-6 lg:gap-8 md:grid-cols-2">
+          <div className="mt-6 grid gap-6 lg:gap-8 md:grid-cols-2 xl:grid-cols-3">
             {filteredWorks.map((w) => (
               <div key={w.title} className="gpro-card flex h-full flex-col rounded-3xl p-6 lg:p-8" style={{ border: `1px solid ${border}`, backgroundColor: card }}>
+                <ImageSlot alt={`Sampul portofolio ${w.title}`} ratio="video" className="mb-5" />
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-bold" style={{ color: textMain }}>{w.title}</p>
+                  <p className="text-lg font-bold" style={{ color: textMain }}>{w.title}</p>
                   <span className="shrink-0 rounded-full border px-3 py-1 text-sm" style={{ ...chipStyle, color: textMain }}>
                     {w.tag}
                   </span>
@@ -726,7 +720,7 @@ export default function Home() {
         <div data-reveal className="gpro-reveal">
           <SectionTitle title="Layanan" desc="Format output yang biasa disiapkan untuk stakeholder dan kolaborator." />
 
-          <div className="grid gap-6 lg:gap-8 md:grid-cols-2">
+          <div className="grid gap-6 lg:gap-8 md:grid-cols-2 xl:grid-cols-4">
             {[
               { t: "Policy Brief & Memo", d: "Dokumen ringkas, jelas, siap dipakai rapat/advokasi." },
               { t: "Peta Analitik & Visual", d: "Peta/infografik stakeholder-friendly, metodologi transparan." },
@@ -746,6 +740,7 @@ export default function Home() {
       <section id="kontak" className="gpro-container gpro-section">
         <div data-reveal className="gpro-reveal">
           <div className="rounded-3xl p-8 lg:p-12" style={{border:`1px solid ${border}`,backgroundColor:card}}>
+            <ImageSlot alt="Banner kolaborasi strategis GPro" ratio="video" className="mb-8 max-h-72" />
             <h2 className="text-3xl font-extrabold lg:text-4xl" style={{color:textMain}}>Ajukan kolaborasi</h2>
             <p className="mt-3 max-w-3xl text-base leading-7" style={{color:textSub}}>Diskusikan kebutuhan kajian, dokumen kebijakan, dan roadmap implementasi bersama GPro.</p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -802,16 +797,13 @@ export default function Home() {
               <div>
                 <p className="text-sm font-semibold" style={{ color: textSub }}>Form Kolaborasi</p>
                 <h3 id="gpro-dialog-title" className="mt-1 text-xl font-bold" style={{ color: textMain }}>Ajukan Kolaborasi</h3>
-                <p className="mt-2 text-sm" style={{ color: textSub }}>
-                  Isi singkat saja. Setelah itu klik <b>Kirim ke WhatsApp</b>.
-                </p>
               </div>
               <button
                 onClick={() => setOpenModal(false)}
                 aria-label="Tutup formulir" className="gpro-btn gpro-btn-ghost gpro-icon-btn"
                 style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
               >
-                ✕
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
               </button>
             </div>
 
@@ -850,7 +842,7 @@ export default function Home() {
                 <input
                   value={form.deadline}
                   onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-                  aria-label="Tenggat waktu" placeholder="Deadline (contoh: 20 Feb / minggu ini)"
+                  aria-label="Tenggat waktu" placeholder="Tenggat waktu"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
@@ -866,37 +858,12 @@ export default function Home() {
               />
 
               {formError && <p role="alert" className="text-sm font-semibold" style={{color:COLORS.red}}>{formError}</p>}
-              {formError && <p role="alert" className="text-sm font-semibold" style={{color:COLORS.red}}>{formError}</p>}
-              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm" style={{ color: textSub }}>
-                  Tips: isi minimal <b>nama</b> + <b>kebutuhan</b> biar cepat diproses.
-                </p>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setOpenModal(false)}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold transition hover:opacity-90"
-                    style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={sendToWhatsApp} disabled={!form.name.trim() || !form.detail.trim()}
-                    className="gpro-shine rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                    style={{ backgroundColor: COLORS.red }}
-                  >
-                    Kirim ke WhatsApp
-                  </button>
-                </div>
+              <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button onClick={() => setOpenModal(false)} className="gpro-btn gpro-btn-ghost gpro-btn-lg w-full sm:w-auto">Batal</button>
+                <button onClick={sendToWhatsApp} disabled={!form.name.trim() || !form.detail.trim()} className="gpro-btn gpro-btn-primary gpro-btn-lg w-full sm:w-auto">Kirim ke WhatsApp</button>
               </div>
             </div>
 
-            <div className="mt-5 rounded-2xl p-4" style={{ backgroundColor: `${COLORS.blue}${dark ? "10" : "14"}` }}>
-              <p className="text-sm font-semibold" style={{ color: textMain }}>Catatan:</p>
-              <p className="mt-1 text-sm" style={{ color: textSub }}>
-                Tutup modal: klik area gelap atau tekan <b>Esc</b>.
-              </p>
-            </div>
           </div>
         </div>
       ) : null}
