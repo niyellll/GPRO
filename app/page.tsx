@@ -850,7 +850,7 @@ export default function Home() {
                 <input
                   value={form.deadline}
                   onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-                  aria-label="Tenggat waktu" aria-label="Tenggat waktu" placeholder="Deadline (contoh: 20 Feb / minggu ini)"
+                  aria-label="Tenggat waktu" placeholder="Deadline (contoh: 20 Feb / minggu ini)"
                   className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                   style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
                 />
@@ -859,7 +859,7 @@ export default function Home() {
               <textarea
                 value={form.detail}
                 onChange={(e) => setForm({ ...form, detail: e.target.value })}
-                aria-label="Detail kebutuhan" aria-label="Detail kebutuhan" placeholder="Ceritakan singkat kebutuhan kamu…"
+                aria-label="Detail kebutuhan" placeholder="Ceritakan singkat kebutuhan kamu…"
                 rows={4}
                 className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                 style={{ border: `1px solid ${border}`, backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#fff", color: textMain }}
