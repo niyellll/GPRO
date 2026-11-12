@@ -154,6 +154,7 @@ export default function Home() {
         <div className="absolute inset-0 gpro-animated-gradient" />
       </div>
 
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:p-3 focus:text-black">Langsung ke konten</a>
       {/* HEADER */}
       <header
         className="sticky top-0 z-40 backdrop-blur"
@@ -202,6 +203,7 @@ export default function Home() {
         {mobileMenu && <nav id="gpro-mobile-nav" className="gpro-container flex flex-col gap-1 border-t py-4 lg:hidden" style={{backgroundColor:card,borderColor:border}}>{([["Tentang","#tentang"],["Publikasi","#publikasi"],["Portofolio","#portofolio"],["Layanan","#layanan"],["Kontak","#kontak"]] as const).map(([label,href])=><a key={href} href={href} className="rounded-xl px-4 py-3 font-semibold" onClick={()=>setMobileMenu(false)} style={{color:textMain}}>{label}</a>)}<button className="gpro-btn gpro-btn-primary" onClick={()=>{setMobileMenu(false);setOpenModal(true)}}>Ajukan Kolaborasi</button></nav>}
       </header>
 
+      <main id="main-content">
       {/* HERO */}
       <section className="gpro-container pt-20 lg:pt-28">
         <div data-reveal className="gpro-reveal">
@@ -617,6 +619,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </main>
       <footer className="gpro-container pb-28 pt-16" style={{color:textSub}}>
         <div className="grid gap-8 border-t pt-8 md:grid-cols-3" style={{borderColor:border}}>
           <div><p className="text-xl font-bold" style={{color:textMain}}>{BRAND.full}</p><p className="mt-2 text-base leading-7">Pusat kajian strategis berbasis data untuk kebijakan yang dapat dilaksanakan.</p></div>
