@@ -540,14 +540,6 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-3"><button className="gpro-btn gpro-btn-ghost" onClick={()=>copyText(BRAND.waPretty,"Nomor WA disalin!")}>Salin Nomor WA</button><button className="gpro-btn gpro-btn-ghost" onClick={()=>copyText(BRAND.email,"Email disalin!")}>Salin Email</button></div>
                 <button className="w-full text-center text-sm font-semibold underline underline-offset-4" style={{color:COLORS.red}} onClick={()=>setOpenModal(true)}>Atau isi form kolaborasi</button>
               </div>
-              <div className="mt-5 rounded-2xl p-4" style={{ backgroundColor: `${COLORS.blue}${dark ? "10" : "14"}` }}>
-                <p className="text-sm font-semibold" style={{ color: textMain }}>Cara kolaborasi (singkat)</p>
-                <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm" style={{ color: textSub }}>
-                  <li>Diskusi kebutuhan (WA)</li>
-                  <li>Ruang lingkup & output disepakati</li>
-                  <li>Draft → review → final</li>
-                </ol>
-              </div>
             </div>
           </div>
 
@@ -572,7 +564,7 @@ export default function Home() {
         <div data-reveal className="gpro-reveal">
           <SectionTitle
             title="Publikasi & Produk"
-            desc="Dokumen dan produk kajian GPro. Materi yang belum tersedia publik dapat diminta melalui form."
+            desc="Kajian kebijakan, peta analitik, serta publikasi strategis Global Pro-eksistensi."
           />
 
           <div className="grid gap-6 lg:gap-8 lg:grid-cols-2 xl:grid-cols-2">
@@ -585,7 +577,7 @@ export default function Home() {
                     {p.type}
                   </span>
                 </div>
-                <p className="mt-2 text-sm" style={{ color: textSub }}>{p.desc}</p>
+                <p className="mt-2 text-base leading-7" style={{ color: textSub }}>{p.desc}</p>
 
                 <div className="mt-auto flex flex-wrap gap-3 pt-6">
                   {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="gpro-btn gpro-btn-primary">Unduh / Lihat</a> : <button className="gpro-btn gpro-btn-primary" onClick={() => setOpenModal(true)}>Minta dokumen</button>}
@@ -615,6 +607,7 @@ export default function Home() {
                 : `linear-gradient(135deg, rgba(208,7,5,0.12), rgba(255,255,255,1), rgba(125,180,206,0.18))`,
             }}
           >
+            <ImageSlot alt="Banner kolaborasi dan kajian strategis" ratio="video" className="mb-8 max-h-64" />
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="max-w-3xl">
                 <p className="text-sm font-semibold" style={{ color: textSub }}>Kolaborasi strategis</p>
@@ -631,15 +624,13 @@ export default function Home() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <a
                   href={waLink} target="_blank" rel="noopener noreferrer"
-                  className="gpro-shine inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-                  style={{ backgroundColor: COLORS.red }}
+                  className="gpro-btn gpro-btn-primary gpro-btn-lg"
                 >
                   Chat WA Sekarang
                 </a>
                 <button
                   onClick={() => setOpenModal(true)}
-                  className="inline-flex items-center justify-center rounded-xl border px-6 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm"
-                  style={{ borderColor: COLORS.blue, color: textMain, backgroundColor: card }}
+                  className="gpro-btn gpro-btn-secondary gpro-btn-lg"
                 >
                   Ajukan Kolaborasi
                 </button>
@@ -652,7 +643,7 @@ export default function Home() {
       {/* PORTOFOLIO */}
       <section id="portofolio" className="gpro-container gpro-section">
         <div data-reveal className="gpro-reveal">
-          <SectionTitle title="Portofolio" desc="Pilih kategori untuk melihat karya yang relevan." />
+          <SectionTitle title="Portofolio" desc="Rangkaian kajian dan karya strategis berdasarkan bidang fokus." />
 
           <div className="flex snap-x gap-2 overflow-x-auto pb-3">
             {categories.map((c) => {
@@ -685,7 +676,7 @@ export default function Home() {
                   </span>
                 </div>
 
-                <p className="mt-2 text-sm" style={{ color: textSub }}>{w.summary}</p>
+                <p className="mt-2 text-base leading-7" style={{ color: textSub }}>{w.summary}</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {w.outputs.map((o) => (
@@ -789,7 +780,7 @@ export default function Home() {
             className="absolute inset-0"
             onClick={() => setOpenModal(false)}
             style={{ backgroundColor: dark ? "rgba(0,0,0,0.72)" : "rgba(0,0,0,0.55)" }}
-            aria-label="Close modal"
+            aria-label="Tutup formulir"
           />
 
           <div role="dialog" aria-modal="true" aria-labelledby="gpro-dialog-title" className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl p-6 shadow-2xl" style={{ backgroundColor: card, border: `1px solid ${border}` }}>
