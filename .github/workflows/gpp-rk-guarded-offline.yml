@@ -13,6 +13,9 @@ on:
       - 'ops/tests/test_bbm_finance_staging_acl.py'
       - 'ops/sql/bbm_finance_v635_staging_anon_acl_READ_ONLY.sql'
       - 'ops/sql/bbm_finance_v635_stage_revoke_anon_REVIEW_ONLY.sql'
+      - 'ops/tests/test_two_base_tenant_role_gate.py'
+      - 'ops/sql/two_base_finance_tenant_role_gate_READ_ONLY.sql'
+      - 'ops/sql/two_base_klarin_tenant_role_gate_READ_ONLY.sql'
       - '.github/workflows/gpp-rk-guarded-offline.yml'
   pull_request:
     paths:
@@ -25,6 +28,9 @@ on:
       - 'ops/tests/test_bbm_finance_staging_acl.py'
       - 'ops/sql/bbm_finance_v635_staging_anon_acl_READ_ONLY.sql'
       - 'ops/sql/bbm_finance_v635_stage_revoke_anon_REVIEW_ONLY.sql'
+      - 'ops/tests/test_two_base_tenant_role_gate.py'
+      - 'ops/sql/two_base_finance_tenant_role_gate_READ_ONLY.sql'
+      - 'ops/sql/two_base_klarin_tenant_role_gate_READ_ONLY.sql'
       - '.github/workflows/gpp-rk-guarded-offline.yml'
 
 permissions:
@@ -40,6 +46,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Compile Python syntax without database connections
-        run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py ops/scripts/csb_klarin_storage_byte_audit.py ops/tests/test_csb_klarin_storage_byte_audit.py ops/tests/test_bbm_finance_staging_acl.py
+        run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py ops/scripts/csb_klarin_storage_byte_audit.py ops/tests/test_csb_klarin_storage_byte_audit.py ops/tests/test_bbm_finance_staging_acl.py ops/tests/test_two_base_tenant_role_gate.py
       - name: Run isolated dry-run and security contract tests
         run: python3 -m unittest discover -s ops/tests -p 'test_*.py' -v
