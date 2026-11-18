@@ -113,3 +113,8 @@ Related: https://github.com/niyellll/GPRO/issues/8 · https://github.com/niyelll
 - Seven static source-contract checks passed on staged SQL files (correct target schema, 25 columns, V543 table and RLS, select-only tenant role, matching digest projection, fail-closed/no import). **This is not SQL execution or integration testing.**
 - Full prerequisites and explicit NO-GO controls: `ops/runbooks/GPP_FINANCE_RK_V439_CUTOVER_NO_GO_20261118.md`. Current storage and finance full restore unproven; no schema change or delta import performed.
 
+## 9. Guarded RK transfer utility and offline CI
+- Added **`ops/scripts/gpp_rk_transfer_guarded.py`** as a default read-only guarded transfer helper. No DB connection strings, passwords, customer records or source transactions are committed to code.
+- `--apply` is explicitly gated on an approved change reference, verified restore reference, freeze confirmation, expected SHA-256 and expected record count. SQL reads a stable original 22-column projection from source; source/target project refs are checked; target RLS/ACL and UUID conflicts are checked; inserted rows are audited by SHA-256 inside a transaction prior to commit. **External freeze and restore evidence remain manual operator prerequisites**; this code has not been connected to credentials or run on the target.
+- Added **9 offline no-network unit tests** at `ops/tests/test_gpp_rk_guarded.py` and a dedicated limited GitHub Action `.github/workflows/gpp-rk-guarded-offline.yml`. No database access or secrets are required by tests.
+- Status of new GitHub Actions workflow **not yet confirmed** as of this audit entry, and Python runtime test outcome is not claimed as PASS.
