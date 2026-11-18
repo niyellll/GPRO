@@ -52,7 +52,9 @@ class StorageByteAuditTests(unittest.TestCase):
 
     def test_source_only_does_not_claim_target_parity(self):
         output = mod.audit(self.load(), self.source)
-        self.assertTrue(output["source_bytes_verified"])
+        self.assertTrue(output["source_file_lengths_verified"])
+        self.assertEqual(output["source_sha256_digests_computed"],1)
+        self.assertEqual(output["source_expected_sha256_proofs_verified"],1)
         self.assertFalse(output["source_target_bytes_equal"])
         self.assertFalse(output["ready_for_cutover"])
 
@@ -113,6 +115,29 @@ class StorageByteAuditTests(unittest.TestCase):
         (self.target / self.entry["storage_path"]).unlink()
         with self.assertRaises(mod.ByteAuditBlocked):
             mod.audit(self.load(),self.source,self.target)
+
+
+    def test_frozen_inventory_count_is_mandatory_for_safe_scope(self):
+        with self.assertRaises(mod.ByteAuditBlocked):
+            mod.audit(self.load(),self.source,self.target,expected_objects=6)
+        result=mod.audit(self.load(),self.source,self.target,expected_objects=1,
+                         expected_bytes=len(DATA))
+        self.assertFalse(result["ready_for_cutover"])
+
+    def test_frozen_total_bytes_detects_incomplete_manifest(self):
+        with self.assertRaises(mod.ByteAuditBlocked):
+            mod.audit(self.load(),self.source,self.target,expected_objects=1,
+                      expected_bytes=len(DATA)+5)
+
+    def test_missing_independent_expected_hash_is_not_marked_verified(self):
+        entry=copy.deepcopy(self.entry)
+        del entry["expected_sha256"]
+        self.manifest.write_text(json.dumps([entry]),encoding="utf-8")
+        result=mod.audit(self.load(),self.source,self.target,expected_objects=1,
+                         expected_bytes=len(DATA))
+        self.assertEqual(result["source_expected_sha256_proofs_verified"],0)
+        self.assertTrue(result["source_target_bytes_equal"])
+        self.assertFalse(result["ready_for_cutover"])
 
     def test_source_and_target_sha_proof_requires_no_secret_or_network(self):
         text=SCRIPT.read_text(encoding="utf-8")
