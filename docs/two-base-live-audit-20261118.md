@@ -95,3 +95,11 @@ Used read-only SQL, per table: `md5(string_agg(md5(to_jsonb(row)::text), '|' ORD
 This report demonstrates current project status, catalog metadata, table counts, and Vercel deployment/build evidence. It is **not** a full data-content hash, authenticated database-login test, cloud E2E proof, Storage-object checksum test, restore test, safe-final-sync validation, or GO approval.
 
 Related: https://github.com/niyellll/GPRO/issues/8 · https://github.com/niyellll/project_piutang/issues/127 · https://github.com/niyellll/GPP_STOCK/issues/33
+
+## 7. Verified staging RPC defect and isolated code patch
+- Connected Supabase `get_edge_function` confirmed deployed GPP stage-only functions `gpro-gpp-klarin-api` and `gpro-gpp-klarin-upload` contain an **undeclared `WORKSPACE`** argument to tenant RPC calls. These would throw at runtime if reached, rather than correctly selecting Pusat/Cabang.
+- Fix source pushed **only** to `niyellll/GPP_STOCK` branch `fix/two-base-gpp-workspace-rpc-20261118` (based on the two-base migration branch): both RPC `p_workspace` arguments now come from `session.workspace`, which derives from authenticated warehouse session context.
+- Added two static contract tests to the existing `tests/gpro-two-base-gateway-jwt-v1.test.mjs`, already referenced by `npm test`; manual source-contract assertions passed. **No Node test run or real cloud E2E pass claimed**.
+- Draft PR **https://github.com/niyellll/GPP_STOCK/pull/36**, head SHA `7a655d25b98974a69599d9a69d1be492e6aa44cd`. CI status from Vercel reports build-rate-limit failure; upgrade prohibited without permission.
+- No Supabase Edge redeployment, staged flag activation, production update, baseline lock alteration or data mutation performed. Deployed runtime still contains bug until reviewed fix is safely rolled out.
+
