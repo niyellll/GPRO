@@ -34,6 +34,27 @@ These are source versus target numbers read directly from each database, not row
 - CSB Klarin source holds **6 claim attachment metadata rows** created on 2026-11-18, total declared size **2,918,989 bytes**. All six have `storage_path`; all have empty `data_base64`. Their target tenant table is empty. These require private-object existence/ownership verification before incremental copy, with checksums and per-tenant authorization.
 - Since source writes are still occurring, final reconciliation must use a controlled capture/freeze and **idempotent delta replay** without overwriting active sessions or creating journal duplicates.
 
+## 2b. Full 92-paired-table content fingerprint audit (2026-11-18)
+Used read-only SQL, per table: `md5(string_agg(md5(to_jsonb(row)::text), '|' ORDER BY row_md5))`, with a deterministic row-hash order. This detects differences in row values even where row counts match, but it is **not** a transactionally synchronized cross-project snapshot or a substitute for SHA-256 object backups, PK-based delta comparison, or audit review.
+
+| Tenant | Digest-equal | Digest-different | Mismatch tables |
+|---|---:|---:|---|
+| CSB Finance | 32/35 | 3 | audit_logs, login_rate_limits, users |
+| GPP Pusat | 20/22 | 2 | login_rate_limits, users |
+| GPP Cabang | 20/22 | 2 | login_rate_limits, users |
+| CSB Klarin | 4/7 | 3 | klarin_realtime_signal, klarin_stock_claim_app_state, klarin_stock_claim_attachments |
+| GPP Stock | 4/6 | 2 | klarin_sessions, users |
+| **TOTAL** | **80/92** | **12** | |
+
+**Volatile user-session metadata diagnosis:** When hashing `users` without `active_session_id`, `active_session_expires_at`, `updated_at`, and `auth_session_version`, the digest is identical source vs target in CSB Finance, GPP Cabang, CSB Klarin, and GPP Stock; GPP Pusat remains mismatched because of the source-only new user. This does *not* authorize overwriting user sessions or account records. CSB Klarin app state and realtime signals remain volatile and require freeze/delta or explicit decision.
+
+## 2c. Storage/backup metadata verified live
+- Finance target `finance-private-backups`: **66 objects**, **13,211 bytes total**, **131–202 bytes per object**. These cannot be treated as demonstrated complete PostgreSQL backups.
+- Klarin target `klarin-private-backups`: **67 objects**, **627,521,682 bytes total**, **2,390,790–20,665,356 bytes per object**. Content and full restore **unverified**.
+- Klarin target legacy `klarin-private-attachments`: **888 objects**, **156,067,645 bytes total**.
+- Klarin target tenant buckets `gpro-csb-private-attachments` and `gpro-gpp-private-attachments`: **no objects in inventory result**.
+- Legacy **CSB** source: all six metadata attachment rows have matching physical `storage.objects` entries (6/6); the six files are still on the legacy source and **have not been copied to target**. Verify owner, object checksum, and access permissions before copy.
+
 ## 3. Roles, schema RLS, and Edge Functions
 - Dedicated LOGIN roles on targets: `gpro_csb_finance`, `gpro_gpp_pusat`, `gpro_gpp_cabang`, `gpro_csb_klarin`, `gpro_gpp_stock`. All five have `rolpassword IS NULL`, `rolcanlogin=true`, `rolinherit=true`, `rolbypassrls=false`. **No real password-authenticated PostgreSQL connection test passed.**
 - Tenant tables in target schemas have RLS enabled: CSB Finance 36/36, GPP Pusat 23/23, GPP Cabang 23/23, CSB Klarin 7/7, GPP Stock 6/6.
