@@ -124,19 +124,28 @@ def read_secure_blob(root: Path, relative_path: str, expected_bytes: int) -> str
         raise ByteAuditBlocked("Unable to inspect private object") from None
 
 
-def audit(manifest, source_root: Path, target_root: Path | None = None):
+def audit(manifest, source_root: Path, target_root: Path | None = None,
+          expected_objects: int | None = None, expected_bytes: int | None = None):
+    if expected_objects is not None and len(manifest) != expected_objects:
+        raise ByteAuditBlocked("Manifest object count differs from frozen inventory")
+    total_expected = sum(entry["size_bytes"] for entry in manifest)
+    if expected_bytes is not None and total_expected != expected_bytes:
+        raise ByteAuditBlocked("Manifest total size differs from frozen inventory")
     source_root = verified_local_root(source_root)
     if target_root is not None:
         target_root = verified_local_root(target_root)
         if target_root == source_root:
             raise ByteAuditBlocked("Source and target local roots must be different")
     bytes_total = 0
+    trusted_sha_proofs = 0
     for entry in manifest:
         length = entry["size_bytes"]
         digest = read_secure_blob(source_root, entry["_source_path"], length)
         expected = entry.get("expected_sha256")
-        if expected is not None and digest != expected.lower():
-            raise ByteAuditBlocked("Source file hash differs from trusted manifest proof")
+        if expected is not None:
+            if digest != expected.lower():
+                raise ByteAuditBlocked("Source file hash differs from trusted manifest proof")
+            trusted_sha_proofs += 1
         if target_root is not None:
             target_hash = read_secure_blob(target_root, entry["_target_path"], length)
             if digest != target_hash:
@@ -146,7 +155,9 @@ def audit(manifest, source_root: Path, target_root: Path | None = None):
         "mode":"OFFLINE_BYTE_AUDIT",
         "objects":len(manifest),
         "bytes_checked":bytes_total,
-        "source_bytes_verified":True,
+        "source_file_lengths_verified":True,
+        "source_sha256_digests_computed":len(manifest),
+        "source_expected_sha256_proofs_verified":trusted_sha_proofs,
         "source_target_bytes_equal":target_root is not None,
         "ready_for_cutover":False,
         "still_requires":"approved full DB and Storage restore, freeze, role E2E, atomic metadata/state cutover",
@@ -158,11 +169,19 @@ def main() -> int:
     p.add_argument("--manifest",required=True)
     p.add_argument("--source-root",required=True)
     p.add_argument("--target-root",help="Optional separately exported target tree; omission verifies source bytes only")
+    p.add_argument("--expected-objects",required=True,type=int,
+                   help="Exact count obtained from fresh, write-frozen source inventory")
+    p.add_argument("--expected-total-bytes",required=True,type=int,
+                   help="Exact total size obtained from fresh, write-frozen source inventory")
     args=p.parse_args()
     try:
+        if args.expected_objects < 1 or args.expected_total_bytes < 1:
+            raise ByteAuditBlocked("Expected object count and bytes must be positive")
         summary=audit(private_manifest(Path(args.manifest)),
                       Path(args.source_root),
-                      Path(args.target_root) if args.target_root else None)
+                      Path(args.target_root) if args.target_root else None,
+                      expected_objects=args.expected_objects,
+                      expected_bytes=args.expected_total_bytes)
         print(json.dumps(summary,sort_keys=True,indent=2))
         return 0
     except (ByteAuditBlocked,OSError):
