@@ -57,3 +57,26 @@ The schema inventory and the reviewed read-only SQL files established:
 
 ## Security advisor context
 The Supabase Security Advisors were read-only-checked on both BASEs. Finance showed **10 INFO-level** `rls_enabled_no_policy` notices for `public` tables, Klarin showed **6 INFO-level** notices for `public` tables; there were no other reported lints in those checks. These notices alone are NOT evidence of public read access—RLS without any policy is typically deny-by-default. Keep existing intentional fail-closed grants. Remediation guidance: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy
+
+
+## Phase-zero original byte SHA-256 check (offline; no upload, no live write)
+The CSV/SQL metadata size checks above are insufficient to prove that the **actual bytes** of a PDF/XLSX are intact. Added `ops/scripts/csb_klarin_storage_byte_audit.py` for this gap, using only Python standard-library modules and no network/DB operations. The operator should keep raw file bytes and private manifest in an **encrypted, access-restricted temporary workspace**, never commit them to GitHub or upload them to chat.
+
+Secure private manifest is a JSON array of original attachment metadata, one entry per unique `id` with `owner_type`, `owner_id`, `file_name`, `mime_type`, `size_bytes`, `storage_path`. Optional `target_storage_path` is allowed only when an approved target mapping differs; optional `expected_sha256` should be independently obtained from authenticated source byte download. Do not copy `data_base64`, credentials, session tokens or business fields into the manifest.
+
+1. After an authorized, audited **external source write freeze**, requery **exact attachment row count and total bytes**, including object path and size metadata; confirm the same six source claim IDs and state version at the checkpoint.
+2. Export/download **actual private object bytes** using an approved authenticated Supabase Storage CLI/S3 client or authorized Dashboard flow; preserve relative object paths rooted in a local `source/` directory. Do not treat `storage.objects` metadata rows as the file payload.
+3. Run source-only verification (use current totals below **only if freshly reconfirmed after freeze**):
+   ```bash
+   python3 ops/scripts/csb_klarin_storage_byte_audit.py \
+     --manifest /secure/csb/attachments-manifest.json \
+     --source-root /secure/csb/source \
+     --expected-objects 6 \
+     --expected-total-bytes 2918989
+   ```
+   This computes SHA-256 of each source object, checks every byte size, validates path containment, rejects symlinks, prevents duplicate IDs, and counts independently supplied expected hash proofs. It **does not** claim the target was checked.
+4. Following a separately authorized Storage transfer (NOT performed in this PR), export the actual **target** private objects into an independent local `target/` directory, preserve the approved object mapping, and repeat with `--target-root /secure/csb/target`. Source and target roots **must differ**. File byte hashes must match exactly; any missing/modified file is NO-GO.
+5. The report exposes aggregate counts only, **never raw object keys, file names, customer/claim IDs, or full file SHA hashes**. `source_expected_sha256_proofs_verified` counts independently supplied trusted source checksums; if absent it reports **0**, not false provenance.
+6. **The utility always reports `ready_for_cutover=false`.** Full DB+Storage restoration, app-state CAS, session/role permissions, metadata linking, signed change record, final cross-project consistency and actual cloud E2E remain independently required. An offline byte match alone does not authorize deployment, database writes, or deletion.
+
+GitHub Actions tests are **synthetic, offline, no customer files or credentials**. Supabase source/target Storage objects have **NOT** yet been physically downloaded, copied or byte-verified.
