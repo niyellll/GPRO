@@ -63,8 +63,11 @@ class GuardedTransferTests(unittest.TestCase):
             query = mod.fingerprint_query(name)
             self.assertIn("sha256(", query)
             self.assertIn(f"FROM {name}.rekening_koran_working_lines_v439", query)
+            self.assertIn("jsonb_build_object(", query)
+            for column in mod.COLUMNS:
+                self.assertIn("'" + column + "', t." + column, query)
             for extra in mod.NEW_COLUMNS:
-                self.assertIn(f"- '{extra}'", query)
+                self.assertNotIn("'" + extra + "', t." + extra, query)
         with self.assertRaises(ValueError):
             mod.fingerprint_query("csb_finance")
 
