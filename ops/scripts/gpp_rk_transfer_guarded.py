@@ -136,7 +136,11 @@ def read_rows(cursor, table: str):
 
 def main() -> int:
     args = prepare_parser().parse_args()
-    check_approval(args)
+    try:
+        check_approval(args)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     source_dsn = os.environ.get("GPRO_RK_SOURCE_DSN", "")
     target_dsn = os.environ.get("GPRO_RK_TARGET_DSN", "")
     require_correct_project(source_dsn, SOURCE_REF)
@@ -149,8 +153,8 @@ def main() -> int:
 
     source = target = None
     try:
-        source = psycopg.connect(source_dsn, sslmode="require", connect_timeout=12)
-        target = psycopg.connect(target_dsn, sslmode="require", connect_timeout=12)
+        source = psycopg.connect(source_dsn, sslmode="require", connect_timeout=12, autocommit=True)
+        target = psycopg.connect(target_dsn, sslmode="require", connect_timeout=12, autocommit=True)
         with source.cursor() as sc, target.cursor() as tc:
             sc.execute("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
             tc.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
@@ -174,8 +178,8 @@ def main() -> int:
             print(f"Source records: {len(sc_rows)}; matching target: {len(target_map)}; pending: {len(missing)}")
             print(f"Source SHA-256: {s[6]}")
             if not args.apply:
-                target.rollback()
-                source.rollback()
+                tc.execute("ROLLBACK")
+                sc.execute("ROLLBACK")
                 print("DRY-RUN only: no rows inserted; no database changes")
                 return 0
             tc.execute("SELECT current_user")
@@ -193,16 +197,16 @@ def main() -> int:
             d = tc.fetchone()
             if d != s:
                 raise ValueError("NO-GO: target fingerprint/count/amount/date mismatch; rollback")
-            target.commit()
-            source.rollback()
+            tc.execute("COMMIT")
             print(f"VERIFIED: inserted {len(missing)} missing RK records, transaction committed")
+            sc.execute("ROLLBACK")
             return 0
     except Exception as exc:
         if target:
-            try: target.rollback()
+            try: target.execute("ROLLBACK")
             except Exception: pass
         if source:
-            try: source.rollback()
+            try: source.execute("ROLLBACK")
             except Exception: pass
         # Never print connection strings, raw SQL, row data or credentials.
         print(f"NO-GO: {str(exc) if isinstance(exc, ValueError) else type(exc).__name__}", file=sys.stderr)
