@@ -4,7 +4,7 @@
 Accept private, securely exported JSON snapshots of the *same* frozen checkpoint.
 Files may contain customer/business data: use an encrypted ephemeral workstation.
 NEVER commit input files or redirect their raw contents to CI/logs.
-Only aggregate counts, versions and status are printed. No transfer/--apply exists.
+Only aggregate counts, versions and status are printed. No transfer or write mode exists.
 """
 from __future__ import annotations
 
