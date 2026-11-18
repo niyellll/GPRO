@@ -27,7 +27,7 @@ COLUMNS = (
     "posisi", "is_active", "created_by", "updated_by", "created_at", "updated_at",
 )
 NEW_COLUMNS = ("matched_journal_no", "matched_source", "attachment_note")
-PROJECTION = " - 'matched_journal_no' - 'matched_source' - 'attachment_note'"
+# Digest always projects the exact 22 original source columns
 
 
 def require_correct_project(dsn: str, expected_ref: str) -> None:
@@ -49,9 +49,10 @@ def require_correct_project(dsn: str, expected_ref: str) -> None:
 def fingerprint_query(schema: str) -> str:
     if schema not in ("public", "gpp_piutang"):
         raise ValueError("Unexpected database schema")
+    projected = ", ".join("'" + column + "', t." + column for column in COLUMNS)
     return f"""
     WITH normalized AS (
-      SELECT id, (to_jsonb(t){PROJECTION})::text AS record_text,
+      SELECT id, jsonb_build_object({projected})::text AS record_text,
              debet, kredit, tanggal
       FROM {schema}.rekening_koran_working_lines_v439 t
     )
