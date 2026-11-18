@@ -31,3 +31,29 @@
 10. Only after remaining all-app migration/restore tests pass may production be cut over. Five old projects still require explicit separate approval before deletion.
 
 **Status: NO-GO.** There are **7 source-only app-state array entries** and **6 legacy CSB attachment objects** requiring owner-aware and version-safe migration. Source remains active.
+
+
+## Verified owner linkage and tenant privacy checks (live, 18 Nov)
+The schema inventory and the reviewed read-only SQL files established:
+- Source attachment metadata **6/6 with unique IDs and distinct Storage object paths**, **all 6 owner_type=`klaim`**, linked to **one** source claim ID contained in the four missing `monitoringKlaim` records.
+- All six source objects match metadata path AND size; total **2,918,989 bytes**. Inline `data_base64` is empty on **all six**. Contents are **four PDFs and two XLSX files**.
+- Target `csb_klarin.klarin_stock_claim_attachments` has 0 rows and its dedicated `gpro-csb-private-attachments` bucket has 0 objects. Bucket is `public=false`, table has RLS enabled, and neither `anon` nor `authenticated` has SELECT grants; trusted `service_role` retains server-only CRUD.
+- This proves **metadata and object-size correspondence only**, not SHA-256 of actual Storage bytes. No authenticated file download, upload, signed URL or object copy was attempted.
+- Independently verified that **all three JSON arrays use stable nonempty unique IDs**: source 4/2/39 and target 0/1/37 for claim/batch/audit. No duplicate ID in the examined snapshot.
+
+**Executed SQL (both queries passed):**
+- `ops/sql/csb_klarin_claim_attachment_source_READ_ONLY.sql`
+- `ops/sql/csb_klarin_claim_attachment_target_READ_ONLY.sql`
+
+## Privacy-safe snapshot delta planner
+- `ops/scripts/csb_klarin_claim_delta_plan.py` is an **offline, local JSON analysis tool only**. There is **no `--apply` mode, network access, database write or Storage action**.
+- It receives **four private JSON files**: `--source-state`, `--target-state`, `--source-attachments`, `--target-attachments`. Real files must be exported solely to a trusted encrypted operator environment after the formal source freeze; never share their contents via GitHub or chat.
+- State file envelope: `{"version": <integer>, "state": <raw JSON state>}`. Do NOT generate the state envelope from a non-transactional or partially copied snapshot. On source this comes from `public.klarin_stock_claim_app_state` for `workspace_key='default'`; on target from `csb_klarin.klarin_stock_claim_app_state` (same key).
+- Attachment arrays need these source columns: `id`, `owner_type`, `owner_id`, `file_name`, `mime_type`, `size_bytes`, `storage_path`. Source export can also include trusted `object_size_bytes` from `storage.objects` metadata and independently downloaded `blob_sha256` for the actual bytes. Target attachment array may be `[]` if verified empty. DO NOT include `data_base64` or secrets in the input.
+- Output contains **only aggregated counts**, no raw customer fields, owner identifiers, file paths, filenames or session tokens. Unexpected state-key drift, duplicate IDs, changed contents with the same ID, target-only entries, owner mismatches, unsafe paths, unsupported MIME types, mismatched byte sizes, or broken hash attestations produce NO-GO.
+- Current live counts are **not a consistent write-frozen checkpoint**. This tool has not been executed with raw private live snapshots, so no live snapshot plan result is asserted.
+- Its 13 synthetic offline tests passed together with the nine GPP RK tests in GitHub Actions run `44345849110` (**22/22 PASS**). That proves code/fixture contracts only, not real cloud transfer.
+- The explicit `ready_for_cutover=false` output is intentionally permanent: even fully validated JSON/Storage manifests do not prove the remaining real backup, authentication and E2E gates.
+
+## Security advisor context
+The Supabase Security Advisors were read-only-checked on both BASEs. Finance showed **10 INFO-level** `rls_enabled_no_policy` notices for `public` tables, Klarin showed **6 INFO-level** notices for `public` tables; there were no other reported lints in those checks. These notices alone are NOT evidence of public read access—RLS without any policy is typically deny-by-default. Keep existing intentional fail-closed grants. Remediation guidance: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy
