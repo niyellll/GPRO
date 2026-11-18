@@ -26,7 +26,7 @@ These are source versus target numbers read directly from each database, not row
 | **Total** | **92** | **85** | **7** | |
 
 ### Non-matching table inventories (extra schema differences)
-- GPP Finance Pusat source includes `public.rekening_koran_working_lines_v439` absent by name from target `gpp_piutang`; source holds **47 rows**, dated **2026-10-01 to 2026-10-31**. Treat as a potential missed business table until verified, even if a renamed target counterpart exists.
+- GPP Finance Pusat source includes `public.rekening_koran_working_lines_v439` absent by name from target `gpp_piutang`; source holds **47 rows**, dated **2026-10-01 to 2026-10-31**. The target BBM `public` schema does contain a separate same-name table (25 columns vs 22 at GPP source), but **that is not proof of a GPP tenant migration and must not receive GPP rows inadvertently**. Treat as a potential missed business table until verified, even if a renamed target counterpart exists.
 - The target Finance tenant schemas each include `gpro_v703_journal_archives_v1` not present by name in corresponding sources; do not drop or alter it without purpose/ownership investigation.
 
 ### Targeted identity audit without exposing credentials or usernames
@@ -99,7 +99,7 @@ Related: https://github.com/niyellll/GPRO/issues/8 · https://github.com/niyelll
 ## 7. Verified staging RPC defect and isolated code patch
 - Connected Supabase `get_edge_function` confirmed deployed GPP stage-only functions `gpro-gpp-klarin-api` and `gpro-gpp-klarin-upload` contain an **undeclared `WORKSPACE`** argument to tenant RPC calls. These would throw at runtime if reached, rather than correctly selecting Pusat/Cabang.
 - Fix source pushed **only** to `niyellll/GPP_STOCK` branch `fix/two-base-gpp-workspace-rpc-20261118` (based on the two-base migration branch): both RPC `p_workspace` arguments now come from `session.workspace`, which derives from authenticated warehouse session context.
-- Added two static contract tests to the existing `tests/gpro-two-base-gateway-jwt-v1.test.mjs`, already referenced by `npm test`; manual source-contract assertions passed. **No Node test run or real cloud E2E pass claimed**.
-- Draft PR **https://github.com/niyellll/GPP_STOCK/pull/36**, head SHA `7a655d25b98974a69599d9a69d1be492e6aa44cd`. CI status from Vercel reports build-rate-limit failure; upgrade prohibited without permission.
+- Added two static contract tests to the existing `tests/gpro-two-base-gateway-jwt-v1.test.mjs`, already referenced by `npm test`; manual source-contract assertions passed. **GitHub Actions Locked Baseline Gate (run 44327820390, SUCCESS; includes full regression + build) and GPRO Klarin Tenant Migration Safety (run 44327820131, SUCCESS) verified after patch; no real cloud E2E pass claimed**.
+- Draft PR **https://github.com/niyellll/GPP_STOCK/pull/36**, head SHA `7a655d25b98974a69599d9a69d1be492e6aa44cd`. GitHub Actions CI successful, but Vercel status reports build-rate-limit failure; upgrade prohibited without permission.
 - No Supabase Edge redeployment, staged flag activation, production update, baseline lock alteration or data mutation performed. Deployed runtime still contains bug until reviewed fix is safely rolled out.
 
