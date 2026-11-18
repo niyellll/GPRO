@@ -74,6 +74,19 @@ class AnonStageReviewTests(unittest.TestCase):
             self.assertNotRegex(source,r"v635stage_[0-9a-fA-F]{16,}")
             self.assertIn("migration",source)
 
+    def test_preflight_is_locked_against_concurrent_writers(self):
+        sql=self.review
+        self.assertIn("LOCK TABLE",sql)
+        self.assertIn("IN SHARE ROW EXCLUSIVE MODE;",sql)
+        lock_at=sql.index("LOCK TABLE")
+        preflight_at=sql.index("DO $preflight$")
+        revoke_at=sql.index("REVOKE INSERT ON TABLE")
+        self.assertLess(lock_at,preflight_at)
+        self.assertLess(preflight_at,revoke_at)
+        lock_sql=sql[lock_at:preflight_at]
+        for table in EXPECTED:
+            self.assertIn("public."+table,lock_sql)
+
     def test_only_one_scope_of_anon_revocation(self):
         body=re.sub(r"--[^\n]*","",self.review)
         self.assertEqual(len(re.findall(r"\bREVOKE\s+INSERT\s+ON\s+TABLE\b",body,flags=re.I)),1)
