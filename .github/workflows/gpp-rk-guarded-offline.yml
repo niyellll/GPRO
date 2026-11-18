@@ -1,4 +1,4 @@
-name: GPRO guarded RK transfer offline checks
+name: GPRO two-base offline safety checks
 on:
   push:
     branches:
@@ -6,11 +6,15 @@ on:
     paths:
       - 'ops/scripts/gpp_rk_transfer_guarded.py'
       - 'ops/tests/test_gpp_rk_guarded.py'
+      - 'ops/scripts/csb_klarin_claim_delta_plan.py'
+      - 'ops/tests/test_csb_klarin_claim_delta_plan.py'
       - '.github/workflows/gpp-rk-guarded-offline.yml'
   pull_request:
     paths:
       - 'ops/scripts/gpp_rk_transfer_guarded.py'
       - 'ops/tests/test_gpp_rk_guarded.py'
+      - 'ops/scripts/csb_klarin_claim_delta_plan.py'
+      - 'ops/tests/test_csb_klarin_claim_delta_plan.py'
       - '.github/workflows/gpp-rk-guarded-offline.yml'
 
 permissions:
@@ -26,6 +30,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Compile Python syntax without database connections
-        run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py
+        run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py
       - name: Run isolated dry-run and security contract tests
-        run: python3 -m unittest discover -s ops/tests -p 'test_gpp_rk_guarded.py' -v
+        run: python3 -m unittest discover -s ops/tests -p 'test_*.py' -v
