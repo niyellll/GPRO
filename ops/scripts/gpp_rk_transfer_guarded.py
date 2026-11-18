@@ -199,7 +199,10 @@ def main() -> int:
                 raise ValueError("NO-GO: target fingerprint/count/amount/date mismatch; rollback")
             tc.execute("COMMIT")
             print(f"VERIFIED: inserted {len(missing)} missing RK records, transaction committed")
-            sc.execute("ROLLBACK")
+            try:
+                sc.execute("ROLLBACK")
+            except Exception:
+                pass  # Source remains read-only; target commit has already succeeded.
             return 0
     except Exception as exc:
         if target:
