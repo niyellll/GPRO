@@ -21,6 +21,21 @@ BEGIN;
 SET LOCAL lock_timeout = '3s';
 SET LOCAL statement_timeout = '20s';
 
+-- Acquire explicit concurrent-writer exclusion BEFORE checking for zero rows.
+-- If an active migration is writing, lock_timeout will abort the change.
+-- Locks remain held through preflight, REVOKE and postflight until COMMIT.
+LOCK TABLE
+  public.bbm_v635_stage_accounts,
+  public.bbm_v635_stage_audit_logs,
+  public.bbm_v635_stage_bbm_accounting_controls_v333,
+  public.bbm_v635_stage_customers,
+  public.bbm_v635_stage_excel_data,
+  public.bbm_v635_stage_journal_details,
+  public.bbm_v635_stage_journals,
+  public.bbm_v635_stage_rekening_koran,
+  public.bbm_v635_stage_users
+IN SHARE ROW EXCLUSIVE MODE;
+
 DO $preflight$
 DECLARE
   stage_name text;
