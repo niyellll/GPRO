@@ -39,3 +39,12 @@ This is a **reviewed execution plan, not an authorization to run production DDL/
 - Current active-source delta sync and rollback.
 
 **Status: STOP / NO-GO until all gates pass.** Source docs: niyellll/GPRO#8 and the live audit in this PR.
+
+## Guarded transfer utility (not executed)
+`ops/scripts/gpp_rk_transfer_guarded.py` uses Python 3 + `psycopg` 3, with source and target DSNs supplied **only by a trusted secret manager** through the operator environment (`GPRO_RK_SOURCE_DSN`, `GPRO_RK_TARGET_DSN`).
+
+- Default invocation performs **read-only/dry-run** and will fail closed until the V439 and V543 target tables have been created by a separately approved migration. No rows are committed.
+- The `--apply` path requires an explicit `--expected-rows`, full 64-character `--expected-sha256`, `--approved-change-ref`, `--verified-restore-ref` and `--confirm-frozen-writes`. These are mandatory operator declarations; **the script cannot independently prove backup restoration or external write freeze**.
+- The utility rejects wrong source/target project refs in connection URLs, validates target RLS and tenant ACL, compares original 22 source columns and existing target UUID rows, refuses ID conflicts/target-only rows, inserts missing rows in one explicit transaction, checks target/source normalized hashes and totals before commit, and rolls back on failures.
+- Never put raw DSN values or credentials on command lines, GitHub, PR descriptions, chat, logs or application builds. Never run `--apply` from an unreviewed pull request. **No service is upgraded or new Supabase branch created.**
+- **Verification status:** source fingerprint SQL actually passed on the live source. Static source checks of the guarded Python utility are possible; a live `psycopg` run against target has **not** been performed because target schema, credentials and full restore gates are not ready.
