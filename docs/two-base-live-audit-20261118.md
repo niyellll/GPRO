@@ -124,3 +124,7 @@ Related: https://github.com/niyellll/GPRO/issues/8 · https://github.com/niyelll
 - Source `default` app state version **40**, target **38**; both have 21 JSON keys. **18 keys equal**; three differ: `monitoringKlaim` 4→0, `uploadBatches` 2→1, `auditLogs` 39→37 (source→target).
 - Within those arrays, multiset comparisons of per-item JSON digests found **7 source-only items, 0 target-only items** (4 claim records + 1 batch + 2 audit entries). These are provisional read-only snapshot results, not an atomic final sync. In addition six physical CSB attachment objects must move with owner-aware metadata.
 - Added `ops/runbooks/CSB_KLARIN_CLAIM_DELTA_NO_GO_20261118.md` to specify backup-first, Storage object hash, optimistic versioning, append-only audit, scoped claims and conflict-safe merge. No data was written.
+
+## 11. Audit log and signal delta checks
+- CSB Finance `public.audit_logs` source **298** vs `csb_finance.audit_logs` target **293**; per-row JSON fingerprint multiset **5 source-only, 0 target-only**. Target audit history is a subset at this observation time. Future replay must be append-only and idempotent, preserve actor/time/event references and avoid copy of active login metadata.
+- CSB Klarin `klarin_realtime_signal` source `default` version **40** vs target **38**, corroborating state version gap. Do not update the signal to 40 without a safe state + attachment transfer and authorized E2E.
