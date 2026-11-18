@@ -9,6 +9,11 @@
 -- been reviewed; source writes are frozen; operator approves the change.
 -- DO NOT run against public.* (it belongs to BBM Finance in the target).
 -- This creates schema structure ONLY; it does NOT import customer/financial rows.
+-- Target table includes 3 nullable V439 app columns not present in legacy source;
+-- during reconciliation hash ONLY the 22 source columns explicitly.
+-- Also prepare the empty V543 period metadata table required by the UI routes.
+-- This does not fix legacy runtime ALTER/CREATE statements: Preview E2E must
+-- prove they work under the proposed least-privilege role or be refactored.
 -- This file is intentionally NOT applied by GitHub / Supabase in this PR.
 --
 -- FAIL-CLOSED: abort if table already exists, role missing or schema missing.
@@ -28,6 +33,9 @@ BEGIN
   END IF;
   IF to_regclass('gpp_piutang.rekening_koran_working_lines_v439') IS NOT NULL THEN
     RAISE EXCEPTION 'NO-GO: target RK table already exists; inspect before proceeding';
+  END IF;
+  IF to_regclass('gpp_piutang.rekening_koran_period_meta_v543') IS NOT NULL THEN
+    RAISE EXCEPTION 'NO-GO: target period metadata already exists; inspect before proceeding';
   END IF;
 END
 $preflight$;
@@ -50,6 +58,9 @@ CREATE TABLE gpp_piutang.rekening_koran_working_lines_v439 (
   lawan_transaksi text DEFAULT ''::text,
   referensi text DEFAULT ''::text,
   posisi text DEFAULT ''::text,
+  matched_journal_no text DEFAULT ''::text,
+  matched_source text DEFAULT ''::text,
+  attachment_note text DEFAULT ''::text,
   is_active boolean DEFAULT true,
   created_by text,
   updated_by text,
@@ -60,19 +71,39 @@ CREATE TABLE gpp_piutang.rekening_koran_working_lines_v439 (
 CREATE INDEX rekening_koran_working_bank_order_v559
   ON gpp_piutang.rekening_koran_working_lines_v439 (bank_account_code, tanggal, source_order);
 
-ALTER TABLE gpp_piutang.rekening_koran_working_lines_v439 ENABLE ROW LEVEL SECURITY;
+CREATE INDEX rekening_koran_working_bank_date_v439
+  ON gpp_piutang.rekening_koran_working_lines_v439 (bank_account_code, tanggal, created_at);
+CREATE INDEX rekening_koran_working_search_v439
+  ON gpp_piutang.rekening_koran_working_lines_v439 (bank_account_code, no_akun, matched_journal_no);
 
-REVOKE ALL ON TABLE gpp_piutang.rekening_koran_working_lines_v439
+CREATE TABLE gpp_piutang.rekening_koran_period_meta_v543 (
+  bank_account_code text NOT NULL,
+  period_key text NOT NULL,
+  opening_balance numeric,
+  closing_balance numeric,
+  source_type text,
+  updated_by text,
+  updated_at timestamp with time zone DEFAULT now(),
+  PRIMARY KEY (bank_account_code, period_key)
+);
+
+ALTER TABLE gpp_piutang.rekening_koran_working_lines_v439 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gpp_piutang.rekening_koran_period_meta_v543 ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON TABLE gpp_piutang.rekening_koran_working_lines_v439,
+  gpp_piutang.rekening_koran_period_meta_v543
   FROM PUBLIC, anon, authenticated;
 
 -- Read-only role: database login inherits this role; no direct write grants.
-GRANT SELECT ON TABLE gpp_piutang.rekening_koran_working_lines_v439
+GRANT SELECT ON TABLE gpp_piutang.rekening_koran_working_lines_v439,
+  gpp_piutang.rekening_koran_period_meta_v543
   TO gpro_gpp_piutang_ro_v1;
 
 -- Only the trusted, authenticated server-side layer may write using service_role.
 -- A service key must NEVER be exposed to browser clients.
 GRANT SELECT, INSERT, UPDATE, DELETE
-  ON TABLE gpp_piutang.rekening_koran_working_lines_v439
+  ON TABLE gpp_piutang.rekening_koran_working_lines_v439,
+     gpp_piutang.rekening_koran_period_meta_v543
   TO service_role;
 
 CREATE POLICY gpro_tenant_reader_select_v1
@@ -80,10 +111,17 @@ CREATE POLICY gpro_tenant_reader_select_v1
   FOR SELECT TO gpro_gpp_piutang_ro_v1
   USING (true);
 
+CREATE POLICY gpro_tenant_reader_select_v1
+  ON gpp_piutang.rekening_koran_period_meta_v543
+  FOR SELECT TO gpro_gpp_piutang_ro_v1
+  USING (true);
+
 DO $verify$
 BEGIN
   IF NOT (SELECT relrowsecurity FROM pg_class
-          WHERE oid = 'gpp_piutang.rekening_koran_working_lines_v439'::regclass) THEN
+          WHERE oid = 'gpp_piutang.rekening_koran_working_lines_v439'::regclass)
+     OR NOT (SELECT relrowsecurity FROM pg_class
+          WHERE oid = 'gpp_piutang.rekening_koran_period_meta_v543'::regclass) THEN
     RAISE EXCEPTION 'NO-GO: RK table RLS is disabled';
   END IF;
   IF has_table_privilege('gpro_gpp_cabang',
@@ -97,8 +135,20 @@ BEGIN
     RAISE EXCEPTION 'NO-GO: RK tenant table has unexpected cross-role SELECT privileges';
   END IF;
   IF NOT has_table_privilege('gpro_gpp_pusat',
-       'gpp_piutang.rekening_koran_working_lines_v439', 'SELECT') THEN
-    RAISE EXCEPTION 'NO-GO: GPP Pusat role cannot SELECT RK';
+       'gpp_piutang.rekening_koran_working_lines_v439', 'SELECT')
+     OR NOT has_table_privilege('gpro_gpp_pusat',
+       'gpp_piutang.rekening_koran_period_meta_v543', 'SELECT') THEN
+    RAISE EXCEPTION 'NO-GO: GPP Pusat role cannot SELECT RK / period metadata';
+  END IF;
+  IF has_table_privilege('gpro_gpp_cabang',
+       'gpp_piutang.rekening_koran_period_meta_v543', 'SELECT')
+     OR has_table_privilege('gpro_csb_finance',
+       'gpp_piutang.rekening_koran_period_meta_v543', 'SELECT')
+     OR has_table_privilege('anon',
+       'gpp_piutang.rekening_koran_period_meta_v543', 'SELECT')
+     OR has_table_privilege('authenticated',
+       'gpp_piutang.rekening_koran_period_meta_v543', 'SELECT') THEN
+    RAISE EXCEPTION 'NO-GO: RK period metadata has cross-role SELECT';
   END IF;
 END
 $verify$;
