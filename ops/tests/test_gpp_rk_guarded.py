@@ -79,6 +79,34 @@ class GuardedTransferTests(unittest.TestCase):
         self.assertIn("has_table_privilege('service_role',%s,%s)",text)
         self.assertNotIn("'SELECT,INSERT,UPDATE,DELETE'",text)
 
+    def test_repeated_business_signatures_block_even_with_distinct_uuid(self):
+        class FakeCursor:
+            def execute(self, sql):
+                self.sql = sql
+            def fetchone(self):
+                return (47, 94)
+        cursor = FakeCursor()
+        with self.assertRaisesRegex(ValueError, "NO-GO"):
+            mod.require_no_duplicate_business_signatures(cursor)
+        self.assertIn("GROUP BY bank_account_code,tanggal,reff,keterangan,debet,kredit,saldo",cursor.sql)
+        self.assertIn("HAVING count(*)>1",cursor.sql)
+        self.assertNotIn("select *",cursor.sql.lower())
+
+    def test_zero_business_signature_duplicates_pass(self):
+        class FakeCursor:
+            def execute(self, sql):
+                pass
+            def fetchone(self):
+                return (0,0)
+        mod.require_no_duplicate_business_signatures(FakeCursor())
+
+    def test_source_business_signature_check_precedes_row_fingerprint(self):
+        script=SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("require_no_duplicate_business_signatures(sc)",script)
+        self.assertLess(script.index("require_no_duplicate_business_signatures(sc)"),
+                        script.index('sc.execute(fingerprint_query("public"))'))
+        self.assertNotIn("DELETE FROM public.rekening_koran_working_lines_v439",script)
+
     def test_static_source_does_not_hardcode_database_password(self):
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("GPRO_RK_SOURCE_DSN", text)
