@@ -147,28 +147,31 @@ def target_ready(cursor) -> None:
                 raise ValueError("NO-GO: service_role lacks required "+privilege+" on GPP tenant table")
 
 
-def require_no_duplicate_business_signatures(cursor) -> None:
-    """Fail closed on distinct UUIDs with identical bank statement semantics.
+def require_no_multiple_active_business_signatures(cursor) -> None:
+    """Only refuse ambiguous *active* bank lines, retaining archived history.
 
-    This check is advisory about business uniqueness, not proof that either
-    member of a repeated pair is safe to delete. Never print raw row data.
+    GPP bank upload intentionally archives prior versions via is_active=false
+    and imports new active UUIDs; archived duplicates are not double-active
+    transactions. The app treats NULL is_active as active (COALESCE(...,true)).
+    Never drop inactive rows or log raw business values.
     """
     cursor.execute("""
-        WITH repeated AS (
-          SELECT count(*)::bigint AS copies
+        WITH repeated_active AS (
+          SELECT count(*) FILTER (WHERE coalesce(is_active,true))::bigint AS active_copies
           FROM public.rekening_koran_working_lines_v439
           GROUP BY bank_account_code,tanggal,reff,keterangan,debet,kredit,saldo
-          HAVING count(*)>1
+          HAVING count(*) FILTER (WHERE coalesce(is_active,true)) > 1
         )
-        SELECT count(*)::bigint AS repeated_groups,
-               coalesce(sum(copies),0)::bigint AS implicated_rows
-        FROM repeated
+        SELECT count(*)::bigint AS multiple_active_groups,
+               coalesce(sum(active_copies),0)::bigint AS implicated_active_rows
+        FROM repeated_active
     """)
     groups, rows = cursor.fetchone()
     if groups or rows:
         raise ValueError(
-            "NO-GO: source Rekening Koran has repeated business signatures; "
-            "operator must review possible duplicate imports before any transfer"
+            "NO-GO: source Rekening Koran has multiple ACTIVE rows with the "
+            "same bank statement signature; preserve archived UUID history "
+            "and investigate before moving data"
         )
 
 
@@ -205,9 +208,9 @@ def main() -> int:
             sc.execute("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
             tc.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
             target_ready(tc)
-            # Stop even a read-only rehearsal from claiming source readiness
-            # when 2 distinct UUIDs represent the same bank statement line.
-            require_no_duplicate_business_signatures(sc)
+            # Historical versions (is_active=false) must be transferred
+            # intact. Reject only ambiguous multiple-active signatures.
+            require_no_multiple_active_business_signatures(sc)
             sc.execute(fingerprint_query("public"))
             s = sc.fetchone()
             if s[0] != s[1]:
