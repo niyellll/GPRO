@@ -47,7 +47,7 @@ def require_operator_url(raw: str, project_ref: str) -> None:
         user=unquote(u.username or "")
         direct=(host=="db."+project_ref+".supabase.co" and user=="postgres" and
                 (u.port is None or u.port==5432))
-        pooler=(bool(re.fullmatch(r"[a-z0-9-]+\\.pooler\\.supabase\\.com",host)) and
+        pooler=(bool(re.fullmatch(r"[a-z0-9-]+\.pooler\.supabase\.com",host)) and
                 user=="postgres."+project_ref and u.port in (5432,6543))
         opts=parse_qs(u.query,keep_blank_values=True,strict_parsing=True) if u.query else {}
         ssl=opts.get("sslmode",["require"])
