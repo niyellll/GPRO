@@ -79,33 +79,49 @@ class GuardedTransferTests(unittest.TestCase):
         self.assertIn("has_table_privilege('service_role',%s,%s)",text)
         self.assertNotIn("'SELECT,INSERT,UPDATE,DELETE'",text)
 
-    def test_repeated_business_signatures_block_even_with_distinct_uuid(self):
+    def test_multiple_active_business_signatures_block(self):
         class FakeCursor:
             def execute(self, sql):
                 self.sql = sql
             def fetchone(self):
-                return (47, 94)
-        cursor = FakeCursor()
-        with self.assertRaisesRegex(ValueError, "NO-GO"):
-            mod.require_no_duplicate_business_signatures(cursor)
+                return (2,4)
+        cursor=FakeCursor()
+        with self.assertRaisesRegex(ValueError,"multiple ACTIVE"):
+            mod.require_no_multiple_active_business_signatures(cursor)
         self.assertIn("GROUP BY bank_account_code,tanggal,reff,keterangan,debet,kredit,saldo",cursor.sql)
-        self.assertIn("HAVING count(*)>1",cursor.sql)
+        self.assertIn("HAVING count(*) FILTER (WHERE coalesce(is_active,true)) > 1",cursor.sql)
         self.assertNotIn("select *",cursor.sql.lower())
 
-    def test_zero_business_signature_duplicates_pass(self):
+    def test_archived_history_does_not_trigger_false_duplicate_block(self):
         class FakeCursor:
-            def execute(self, sql):
-                pass
+            def execute(self,sql):
+                self.sql=sql
             def fetchone(self):
+                # 47 active and 47 archived across 47 same business signatures
+                # each group has exactly one active, so repeated-active groups = 0.
                 return (0,0)
-        mod.require_no_duplicate_business_signatures(FakeCursor())
+        cursor=FakeCursor()
+        mod.require_no_multiple_active_business_signatures(cursor)
+        self.assertIn("coalesce(is_active,true)",cursor.sql)
 
-    def test_source_business_signature_check_precedes_row_fingerprint(self):
+    def test_null_status_is_treated_as_active_like_existing_app(self):
         script=SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("require_no_duplicate_business_signatures(sc)",script)
-        self.assertLess(script.index("require_no_duplicate_business_signatures(sc)"),
+        self.assertIn("coalesce(is_active,true)",script)
+        self.assertIn("is_active=false",script)
+        self.assertIn("Historical versions",script)
+
+    def test_source_active_uniqueness_check_precedes_row_fingerprint(self):
+        script=SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("require_no_multiple_active_business_signatures(sc)",script)
+        self.assertLess(script.index("require_no_multiple_active_business_signatures(sc)"),
                         script.index('sc.execute(fingerprint_query("public"))'))
         self.assertNotIn("DELETE FROM public.rekening_koran_working_lines_v439",script)
+
+    def test_all_source_rows_including_archived_rows_are_read(self):
+        script=SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("SELECT {names} FROM {table} ORDER BY id",script)
+        self.assertNotIn("FROM {table} WHERE is_active=true",script)
+        self.assertIn('"is_active",',script)
 
     def test_static_source_does_not_hardcode_database_password(self):
         text = SCRIPT.read_text(encoding="utf-8")
