@@ -138,7 +138,7 @@ BEGIN
        'gpp_finance_cabang.rekening_koran_working_lines_v439', 'SELECT')
      OR NOT has_table_privilege('gpro_gpp_cabang',
        'gpp_finance_cabang.rekening_koran_period_meta_v543', 'SELECT') THEN
-    RAISE EXCEPTION 'NO-GO: GPP Pusat role cannot SELECT RK / period metadata';
+    RAISE EXCEPTION 'NO-GO: GPP Cabang role cannot SELECT RK / period metadata';
   END IF;
   IF has_table_privilege('gpro_gpp_pusat',
        'gpp_finance_cabang.rekening_koran_period_meta_v543', 'SELECT')
