@@ -108,6 +108,31 @@ def state_delta(source: object, target: object) -> tuple[dict, set[str]]:
     }, added_claim_ids
 
 
+def merged_state_from_verified_subset(source: object, target: object) -> dict:
+    """Produce a PRIVATE in-memory exact state merge; never output raw records.
+
+    Only call after state_delta has established each target business ID and
+    every unaffected key are identical to the frozen source. Preserve target
+    objects for matching IDs and rebuild three arrays in source order.
+    """
+    import copy
+
+    state_delta(source, target)
+    _, src = validate_state(source)
+    _, dst = validate_state(target)
+    merged = copy.deepcopy(dst)
+    for key in DELTA_KEYS:
+        existing = {safe_id(item.get("id")): item for item in dst[key]}
+        merged[key] = [
+            copy.deepcopy(existing[entry["id"]])
+            if entry["id"] in existing else copy.deepcopy(entry)
+            for entry in src[key]
+        ]
+    if fingerprint(merged) != fingerprint(src):
+        raise DeltaBlocked("Merged state cannot reproduce verified source snapshot")
+    return merged
+
+
 def validate_attachment_path(value: object) -> None:
     if not isinstance(value, str) or not value or len(value) > 1024:
         raise DeltaBlocked("Invalid storage object path")
