@@ -114,6 +114,32 @@ class ClaimDeltaPlannerTests(unittest.TestCase):
         self.assertFalse(output["source_object_bytes_all_attested"])
         self.assertFalse(output["ready_for_cutover"])
 
+    def test_merged_state_is_exact_source_and_private(self):
+        source,target,files,existing = fixture()
+        merged = mod.merged_state_from_verified_subset(source,target)
+        self.assertEqual(merged,source["state"])
+        self.assertIsNot(merged,source["state"])
+        self.assertIsNot(merged["auditLogs"],source["state"]["auditLogs"])
+        self.assertEqual(mod.fingerprint(merged),mod.fingerprint(source["state"]))
+        self.assertFalse(any(key.startswith("_") for key in merged))
+
+    def test_merged_state_orders_subset_items_without_discarding_target_rows(self):
+        source,target,files,existing = fixture()
+        source["state"]["auditLogs"] = [
+            {"id":"audit-new","action":"import"},
+            {"id":"audit-old","action":"read"},
+        ]
+        merged = mod.merged_state_from_verified_subset(source,target)
+        self.assertEqual([r["id"] for r in merged["auditLogs"]],
+                         ["audit-new","audit-old"])
+        self.assertEqual(merged["auditLogs"][1],target["state"]["auditLogs"][0])
+
+    def test_merged_state_rejects_conflicts_without_leaking_values(self):
+        source,target,files,existing = fixture()
+        target["state"]["uploadBatches"][0]["status"]="divergent"
+        with self.assertRaises(mod.DeltaBlocked):
+            mod.merged_state_from_verified_subset(source,target)
+
     def test_cli_has_no_network_or_write_interface(self):
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertNotIn("--apply", text)
