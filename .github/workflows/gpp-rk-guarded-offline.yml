@@ -12,6 +12,7 @@ on:
       - 'ops/tests/test_csb_klarin_claim_delta_plan.py'
       - 'ops/scripts/csb_klarin_state_transfer_guarded.py'
       - 'ops/tests/test_csb_klarin_state_transfer_guarded.py'
+      - 'ops/sql/EPHEMERAL_CSB_KLARIN_CAS_TEST_ONLY.sql'
       - 'ops/scripts/csb_klarin_storage_byte_audit.py'
       - 'ops/tests/test_csb_klarin_storage_byte_audit.py'
       - 'ops/tests/test_bbm_finance_staging_acl.py'
@@ -31,6 +32,7 @@ on:
       - 'ops/tests/test_csb_klarin_claim_delta_plan.py'
       - 'ops/scripts/csb_klarin_state_transfer_guarded.py'
       - 'ops/tests/test_csb_klarin_state_transfer_guarded.py'
+      - 'ops/sql/EPHEMERAL_CSB_KLARIN_CAS_TEST_ONLY.sql'
       - 'ops/scripts/csb_klarin_storage_byte_audit.py'
       - 'ops/tests/test_csb_klarin_storage_byte_audit.py'
       - 'ops/tests/test_bbm_finance_staging_acl.py'
@@ -57,3 +59,34 @@ jobs:
         run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_finance_audit_transfer_guarded.py ops/tests/test_csb_finance_audit_transfer_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py ops/scripts/csb_klarin_state_transfer_guarded.py ops/tests/test_csb_klarin_state_transfer_guarded.py ops/scripts/csb_klarin_storage_byte_audit.py ops/tests/test_csb_klarin_storage_byte_audit.py ops/tests/test_bbm_finance_staging_acl.py ops/tests/test_two_base_tenant_role_gate.py
       - name: Run isolated dry-run and security contract tests
         run: python3 -m unittest discover -s ops/tests -p 'test_*.py' -v
+
+  csb-klarin-pg17-cas:
+    name: Synthetic PostgreSQL 17 claim CAS + tenant isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: gpro_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: gpro_ci_ephemeral_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d gpro_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - name: Checkout synthetic-only SQL fixtures
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Execute actual PostgreSQL 17 tenant denial, CAS and rollback
+        env:
+          PGPASSWORD: gpro_ci_ephemeral_only
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            --host=localhost --port=5432 --username=postgres --dbname=gpro_ci \
+            --file=ops/sql/EPHEMERAL_CSB_KLARIN_CAS_TEST_ONLY.sql
