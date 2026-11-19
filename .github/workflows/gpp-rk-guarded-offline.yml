@@ -8,6 +8,7 @@ on:
       - 'ops/scripts/gpp_rk_transfer_guarded.py'
       - 'ops/tests/test_gpp_rk_guarded.py'
       - 'ops/scripts/csb_finance_audit_transfer_guarded.py'
+      - 'ops/sql/EPHEMERAL_CSB_FINANCE_AUDIT_DELTA_TEST_ONLY.sql'
       - 'ops/tests/test_csb_finance_audit_transfer_guarded.py'
       - 'ops/scripts/csb_klarin_claim_delta_plan.py'
       - 'ops/tests/test_csb_klarin_claim_delta_plan.py'
@@ -38,6 +39,7 @@ on:
       - 'ops/scripts/gpp_rk_transfer_guarded.py'
       - 'ops/tests/test_gpp_rk_guarded.py'
       - 'ops/scripts/csb_finance_audit_transfer_guarded.py'
+      - 'ops/sql/EPHEMERAL_CSB_FINANCE_AUDIT_DELTA_TEST_ONLY.sql'
       - 'ops/tests/test_csb_finance_audit_transfer_guarded.py'
       - 'ops/scripts/csb_klarin_claim_delta_plan.py'
       - 'ops/tests/test_csb_klarin_claim_delta_plan.py'
@@ -134,3 +136,11 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 \
             --host=localhost --port=5432 --username=postgres --dbname=gpro_ci \
             --file=ops/sql/EPHEMERAL_GPP_CABANG_RK_TARGET_DDL_TEST_ONLY.sql
+
+      - name: Verify append-only five-record CSB audit delta and rollback
+        env:
+          PGPASSWORD: gpro_ci_ephemeral_only
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            --host=localhost --port=5432 --username=postgres --dbname=gpro_ci \
+            --file=ops/sql/EPHEMERAL_CSB_FINANCE_AUDIT_DELTA_TEST_ONLY.sql

@@ -66,6 +66,53 @@ class AuditDeltaGuardTests(unittest.TestCase):
             with self.assertRaises(mod.AuditTransferBlocked):
                 mod.assert_pinned_dsn(raw,mod.TARGET_REF)
 
+    def test_reject_direct_host_with_wrong_username_or_wrong_database(self):
+        valid=f"postgresql://postgres:synthetic@db.{mod.TARGET_REF}.supabase.co:5432/postgres"
+        mod.assert_pinned_dsn(valid,mod.TARGET_REF)
+        invalid=(
+            f"postgresql://gpro_csb_finance:synthetic@db.{mod.TARGET_REF}.supabase.co:5432/postgres",
+            f"postgresql://postgres.other:synthetic@db.{mod.TARGET_REF}.supabase.co:5432/postgres",
+            f"postgresql://postgres:synthetic@db.{mod.TARGET_REF}.supabase.co:5432/other",
+            f"postgresql://postgres:synthetic@db.{mod.TARGET_REF}.supabase.co:5433/postgres",
+            f"postgresql://postgres:synthetic@db.{mod.TARGET_REF}.supabase.co/postgres",
+        )
+        for dsn in invalid:
+            with self.subTest(dsn=dsn.split("@")[-1]),self.assertRaises(mod.AuditTransferBlocked):
+                mod.assert_pinned_dsn(dsn,mod.TARGET_REF)
+
+    def test_pooler_requires_exact_project_scoped_postgres_user(self):
+        good=f"postgresql://postgres.{mod.TARGET_REF}:synthetic@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+        mod.assert_pinned_dsn(good,mod.TARGET_REF)
+        wrong=(
+            f"postgresql://postgres:synthetic@aws-0-ap-south-1.pooler.supabase.com:5432/postgres",
+            f"postgresql://postgres.{mod.SOURCE_REF}:synthetic@aws-0-ap-south-1.pooler.supabase.com:5432/postgres",
+            f"postgresql://postgres.{mod.TARGET_REF}:synthetic@evil.example.com:5432/postgres",
+            f"postgresql://postgres.{mod.TARGET_REF}:synthetic@aws-0-ap-south-1.pooler.supabase.com.evil.invalid:5432/postgres",
+            f"postgresql://postgres.{mod.TARGET_REF}:synthetic@aws-0-ap-south-1.pooler.supabase.com:443/postgres",
+        )
+        for dsn in wrong:
+            with self.subTest(dsn=dsn.split("@")[-1]),self.assertRaises(mod.AuditTransferBlocked):
+                mod.assert_pinned_dsn(dsn,mod.TARGET_REF)
+
+    def test_strict_tls_and_uri_options_fail_closed(self):
+        good=f"postgresql://postgres:synthetic@db.{mod.TARGET_REF}.supabase.co:5432/postgres"
+        for suffix in ("?sslmode=require","?sslmode=verify-full"):
+            mod.assert_pinned_dsn(good+suffix,mod.TARGET_REF)
+        invalid=(
+            "?sslmode=disable","?sslmode=prefer","?sslmode=allow",
+            "?sslmode=require&sslmode=disable",
+            "?sslmode=require&host=evil.invalid","?sslmode=",
+            "#redirect",
+        )
+        for suffix in invalid:
+            with self.subTest(suffix=suffix),self.assertRaises(mod.AuditTransferBlocked):
+                mod.assert_pinned_dsn(good+suffix,mod.TARGET_REF)
+
+    def test_unknown_expected_project_is_rejected(self):
+        valid=f"postgresql://postgres:synthetic@db.{mod.SOURCE_REF}.supabase.co:5432/postgres"
+        with self.assertRaises(mod.AuditTransferBlocked):
+            mod.assert_pinned_dsn(valid,"arbitrary-other-ref")
+
     def test_append_only_delta_is_deterministic_and_idempotent(self):
         src=[("one","record"),("two","record"),("three","record")]
         dst=[("one","record")]
