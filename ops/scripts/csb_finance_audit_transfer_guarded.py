@@ -103,17 +103,24 @@ def target_ready(c) -> None:
        WHERE attrelid=%s::regclass AND attnum>0 AND NOT attisdropped""",(TARGET_TABLE,))
     if not set(COLUMNS).issubset(set(c.fetchone()[0] or [])):
         raise AuditTransferBlocked("NO-GO: target audit column contract incomplete")
+    # IMPORTANT: PostgreSQL comma-separated privilege lists are OR, not AND!
+    # Check every grant separately; a bare SELECT cannot satisfy server DML.
     c.execute("""SELECT
-      has_table_privilege('anon',%s,'SELECT,INSERT'),
-      has_table_privilege('authenticated',%s,'SELECT,INSERT'),
+      has_table_privilege('anon',%s,'SELECT'),
+      has_table_privilege('anon',%s,'INSERT'),
+      has_table_privilege('authenticated',%s,'SELECT'),
+      has_table_privilege('authenticated',%s,'INSERT'),
       has_table_privilege('gpro_gpp_pusat',%s,'SELECT'),
       has_table_privilege('gpro_gpp_cabang',%s,'SELECT'),
       has_table_privilege('gpro_csb_finance',%s,'SELECT'),
-      has_table_privilege('service_role',%s,'SELECT,INSERT,UPDATE,DELETE')
-      """,(TARGET_TABLE,)*6)
-    an,au,gpp1,gpp2,csb,svc=c.fetchone()
-    if an or au or gpp1 or gpp2 or not csb or not svc:
-        raise AuditTransferBlocked("NO-GO: audit table grants fail tenant isolation")
+      has_table_privilege('service_role',%s,'SELECT'),
+      has_table_privilege('service_role',%s,'INSERT'),
+      has_table_privilege('service_role',%s,'UPDATE'),
+      has_table_privilege('service_role',%s,'DELETE')
+      """,(TARGET_TABLE,)*11)
+    an_read,an_write,auth_read,auth_write,gpp1,gpp2,csb,svc_read,svc_insert,svc_update,svc_delete=c.fetchone()
+    if any((an_read,an_write,auth_read,auth_write,gpp1,gpp2)) or not csb or not all((svc_read,svc_insert,svc_update,svc_delete)):
+        raise AuditTransferBlocked("NO-GO: audit table grants fail tenant isolation or server CRUD")
 
 
 def rows(c,table: str):
