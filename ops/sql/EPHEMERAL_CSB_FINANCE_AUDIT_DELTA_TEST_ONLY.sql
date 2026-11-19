@@ -112,7 +112,7 @@ $final$;
 -- A conflicting same UUID must be visible and fail preflight (then rollback).
 BEGIN;
 UPDATE gpro_ci_audit_target.audit_logs SET action='MUTATED_SYNTHETIC'
- WHERE id=(SELECT min(id) FROM gpro_ci_audit_target.audit_logs);
+ WHERE id=(SELECT id FROM gpro_ci_audit_target.audit_logs ORDER BY id LIMIT 1);
 DO $conflict$
 BEGIN
  IF NOT EXISTS (
