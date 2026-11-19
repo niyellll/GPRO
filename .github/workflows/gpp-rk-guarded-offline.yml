@@ -92,6 +92,8 @@ jobs:
         run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_finance_audit_transfer_guarded.py ops/tests/test_csb_finance_audit_transfer_guarded.py ops/scripts/gpp_pusat_user_delta_guarded.py ops/tests/test_gpp_pusat_user_delta_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py ops/scripts/csb_klarin_state_transfer_guarded.py ops/tests/test_csb_klarin_state_transfer_guarded.py ops/scripts/csb_klarin_storage_byte_audit.py ops/tests/test_csb_klarin_storage_byte_audit.py ops/scripts/csb_klarin_storage_stage_guarded.py ops/tests/test_csb_klarin_storage_stage_guarded.py ops/scripts/csb_klarin_private_manifest_guarded.py ops/tests/test_csb_klarin_private_manifest_guarded.py ops/tests/test_bbm_finance_staging_acl.py ops/tests/test_two_base_tenant_role_gate.py ops/scripts/two_base_live_readiness_gate.py ops/tests/test_two_base_live_readiness_gate.py
       - name: Run isolated dry-run and security contract tests
         run: python3 -m unittest discover -s ops/tests -p 'test_*.py' -v
+      - name: Prove seven-project readiness tool defaults to no network
+        run: python3 ops/scripts/two_base_live_readiness_gate.py
 
   csb-klarin-pg17-cas:
     name: Synthetic PostgreSQL 17 CSB CAS and GPP archived RK
