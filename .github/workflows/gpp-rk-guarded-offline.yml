@@ -2,6 +2,7 @@ name: GPRO two-base offline safety checks
 on:
   push:
     branches:
+      - main
       - audit/two-base-live-reconciliation-20261118
     paths:
       - 'ops/scripts/gpp_rk_transfer_guarded.py'
