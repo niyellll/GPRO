@@ -42,14 +42,14 @@ COMMIT;
 -- Prior import version becomes inactive; new version is active.
 INSERT INTO gpro_ci_source.rekening_koran_working_lines_v439
 (id,bank_account_code,tanggal,reff,keterangan,debet,kredit,saldo,source_order,is_active,created_at)
-SELECT md5('legacy-'+n::text)::uuid,'BANK-TEST',
+SELECT md5('legacy-'||n::text)::uuid,'BANK-TEST',
  '2026-10-01'::date+n-1,
  'REF-'||n::text,'SYNTHETIC TRANSACTION '||n::text,
  1000+n,1005+n,100000+n,n,false,'2026-11-18T04:00:00+00'::timestamptz
 FROM generate_series(1,47) n;
 INSERT INTO gpro_ci_source.rekening_koran_working_lines_v439
 (id,bank_account_code,tanggal,reff,keterangan,debet,kredit,saldo,source_order,is_active,created_at)
-SELECT md5('replacement-'+n::text)::uuid,'BANK-TEST',
+SELECT md5('replacement-'||n::text)::uuid,'BANK-TEST',
  '2026-10-01'::date+n-1,
  'REF-'||n::text,'SYNTHETIC TRANSACTION '||n::text,
  1000+n,1005+n,100000+n,n,true,'2026-11-19T04:00:00+00'::timestamptz
