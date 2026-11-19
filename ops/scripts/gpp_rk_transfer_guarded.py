@@ -68,6 +68,27 @@ def fingerprint_query(schema: str) -> str:
     """
 
 
+def active_archive_stats_query(schema: str) -> str:
+    """Compare current-ledger amounts without discarding historic source UUIDs.
+
+    Caller must execute inside the already-open, consistent source/target
+    snapshot. The application's read filter treats NULL is_active as active.
+    """
+    if schema not in ("public", "gpp_piutang"):
+        raise ValueError("Unexpected database schema")
+    return f"""
+    SELECT count(*)::bigint AS all_rows,
+      count(*) FILTER (WHERE coalesce(is_active,true))::bigint AS active_rows,
+      count(*) FILTER (WHERE is_active IS FALSE)::bigint AS archived_rows,
+      count(*) FILTER (WHERE is_active IS NULL)::bigint AS null_status_rows,
+      coalesce(sum(debet) FILTER (WHERE coalesce(is_active,true)),0)
+        AS active_debit_total,
+      coalesce(sum(kredit) FILTER (WHERE coalesce(is_active,true)),0)
+        AS active_credit_total
+    FROM {schema}.rekening_koran_working_lines_v439
+    """
+
+
 def prepare_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="GPP RK guarded transfer; dry-run by default")
     p.add_argument("--apply", action="store_true", help="Enable guarded transactional write only after all gates")
@@ -213,6 +234,12 @@ def main() -> int:
             require_no_multiple_active_business_signatures(sc)
             sc.execute(fingerprint_query("public"))
             s = sc.fetchone()
+            sc.execute(active_archive_stats_query("public"))
+            source_activity = sc.fetchone()
+            if source_activity[0] != s[0] or (
+                source_activity[1] + source_activity[2] != source_activity[0]
+            ):
+                raise ValueError("NO-GO: inconsistent GPP source active/archive ledger counts")
             if s[0] != s[1]:
                 raise ValueError("NO-GO: duplicate source UUIDs")
             if args.expected_rows is not None and s[0] != args.expected_rows:
@@ -228,6 +255,7 @@ def main() -> int:
                 raise ValueError(f"NO-GO: {conflicts} target UUID conflicts or target-only rows")
             missing = [row for row in sc_rows if row[0] not in target_map]
             print(f"Source records: {len(sc_rows)}; matching target: {len(target_map)}; pending: {len(missing)}")
+            print(f"Source effective-active rows: {source_activity[1]}; archived rows: {source_activity[2]}")
             print(f"Source SHA-256: {s[6]}")
             if not args.apply:
                 tc.execute("ROLLBACK")
@@ -249,6 +277,13 @@ def main() -> int:
             d = tc.fetchone()
             if d != s:
                 raise ValueError("NO-GO: target fingerprint/count/amount/date mismatch; rollback")
+            tc.execute(active_archive_stats_query("gpp_piutang"))
+            target_activity = tc.fetchone()
+            if target_activity != source_activity:
+                raise ValueError(
+                    "NO-GO: target active/archive counts or current-ledger debit/credit "
+                    "totals differ from source; rollback"
+                )
             tc.execute("COMMIT")
             print(f"VERIFIED: inserted {len(missing)} missing RK records, transaction committed")
             try:
