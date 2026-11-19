@@ -7,7 +7,7 @@ SELECT
  s.workspace_key,
  s.version AS app_state_version,
  encode(sha256(convert_to(s.state::text,'UTF8')),'hex') AS app_state_sha256,
- jsonb_object_length(s.state) AS app_state_top_level_keys,
+ (SELECT count(*)::int FROM jsonb_object_keys(s.state) AS key) AS app_state_top_level_keys,
  jsonb_array_length(s.state->'monitoringKlaim') AS claim_records,
  jsonb_array_length(s.state->'uploadBatches') AS upload_batches,
  jsonb_array_length(s.state->'auditLogs') AS app_audit_events,
