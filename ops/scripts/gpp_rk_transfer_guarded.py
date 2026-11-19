@@ -147,6 +147,31 @@ def target_ready(cursor) -> None:
                 raise ValueError("NO-GO: service_role lacks required "+privilege+" on GPP tenant table")
 
 
+def require_no_duplicate_business_signatures(cursor) -> None:
+    """Fail closed on distinct UUIDs with identical bank statement semantics.
+
+    This check is advisory about business uniqueness, not proof that either
+    member of a repeated pair is safe to delete. Never print raw row data.
+    """
+    cursor.execute("""
+        WITH repeated AS (
+          SELECT count(*)::bigint AS copies
+          FROM public.rekening_koran_working_lines_v439
+          GROUP BY bank_account_code,tanggal,reff,keterangan,debet,kredit,saldo
+          HAVING count(*)>1
+        )
+        SELECT count(*)::bigint AS repeated_groups,
+               coalesce(sum(copies),0)::bigint AS implicated_rows
+        FROM repeated
+    """)
+    groups, rows = cursor.fetchone()
+    if groups or rows:
+        raise ValueError(
+            "NO-GO: source Rekening Koran has repeated business signatures; "
+            "operator must review possible duplicate imports before any transfer"
+        )
+
+
 def read_rows(cursor, table: str):
     if table not in (SOURCE_TABLE, TARGET_TABLE):
         raise ValueError("Unrecognized table")
@@ -180,6 +205,9 @@ def main() -> int:
             sc.execute("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
             tc.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
             target_ready(tc)
+            # Stop even a read-only rehearsal from claiming source readiness
+            # when 2 distinct UUIDs represent the same bank statement line.
+            require_no_duplicate_business_signatures(sc)
             sc.execute(fingerprint_query("public"))
             s = sc.fetchone()
             if s[0] != s[1]:
