@@ -123,6 +123,30 @@ class GuardedTransferTests(unittest.TestCase):
         self.assertNotIn("FROM {table} WHERE is_active=true",script)
         self.assertIn('"is_active",',script)
 
+    def test_active_archive_stats_are_schema_pinned_and_ledger_only(self):
+        for schema in ("public","gpp_piutang"):
+            q=mod.active_archive_stats_query(schema)
+            self.assertIn("coalesce(is_active,true)",q)
+            self.assertIn("active_rows",q)
+            self.assertIn("archived_rows",q)
+            self.assertIn("active_debit_total",q)
+            self.assertIn("active_credit_total",q)
+            self.assertIn("count(*)::bigint AS all_rows",q)
+            self.assertNotIn("DELETE",q)
+        with self.assertRaises(ValueError):
+            mod.active_archive_stats_query("csb_finance")
+
+    def test_apply_verifies_active_archive_totals_after_exact_full_hash(self):
+        source=SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('sc.execute(active_archive_stats_query("public"))',source)
+        self.assertIn('tc.execute(active_archive_stats_query("gpp_piutang"))',source)
+        self.assertIn("if target_activity != source_activity",source)
+        self.assertIn("target active/archive counts or current-ledger",source)
+        self.assertLess(source.index('tc.execute(fingerprint_query("gpp_piutang"))'),
+                        source.index('tc.execute(active_archive_stats_query("gpp_piutang"))'))
+        self.assertLess(source.index("if target_activity != source_activity"),
+                        source.index('tc.execute("COMMIT")'))
+
     def test_static_source_does_not_hardcode_database_password(self):
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("GPRO_RK_SOURCE_DSN", text)
