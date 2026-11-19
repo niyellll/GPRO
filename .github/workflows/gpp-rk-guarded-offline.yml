@@ -16,6 +16,8 @@ on:
       - 'ops/sql/EPHEMERAL_CSB_KLARIN_CAS_TEST_ONLY.sql'
       - 'ops/sql/EPHEMERAL_GPP_RK_ARCHIVED_HISTORY_TEST_ONLY.sql'
       - 'ops/sql/EPHEMERAL_GPP_RK_TARGET_DDL_TEST_ONLY.sql'
+      - 'ops/sql/EPHEMERAL_GPP_CABANG_RK_TARGET_DDL_TEST_ONLY.sql'
+      - 'ops/sql/gpp_finance_cabang_rekening_koran_v439_create_REVIEW_ONLY.sql'
       - 'ops/sql/gpp_piutang_rekening_koran_v439_create_REVIEW_ONLY.sql'
       - 'ops/sql/gpp_rk_duplicate_business_signature_READ_ONLY.sql'
       - 'ops/scripts/csb_klarin_storage_byte_audit.py'
@@ -40,6 +42,8 @@ on:
       - 'ops/sql/EPHEMERAL_CSB_KLARIN_CAS_TEST_ONLY.sql'
       - 'ops/sql/EPHEMERAL_GPP_RK_ARCHIVED_HISTORY_TEST_ONLY.sql'
       - 'ops/sql/EPHEMERAL_GPP_RK_TARGET_DDL_TEST_ONLY.sql'
+      - 'ops/sql/EPHEMERAL_GPP_CABANG_RK_TARGET_DDL_TEST_ONLY.sql'
+      - 'ops/sql/gpp_finance_cabang_rekening_koran_v439_create_REVIEW_ONLY.sql'
       - 'ops/sql/gpp_piutang_rekening_koran_v439_create_REVIEW_ONLY.sql'
       - 'ops/sql/gpp_rk_duplicate_business_signature_READ_ONLY.sql'
       - 'ops/scripts/csb_klarin_storage_byte_audit.py'
@@ -114,3 +118,11 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 \
             --host=localhost --port=5432 --username=postgres --dbname=gpro_ci \
             --file=ops/sql/EPHEMERAL_GPP_RK_TARGET_DDL_TEST_ONLY.sql
+
+      - name: Verify Cabang first-use DDL denies Pusat and browser roles
+        env:
+          PGPASSWORD: gpro_ci_ephemeral_only
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            --host=localhost --port=5432 --username=postgres --dbname=gpro_ci \
+            --file=ops/sql/EPHEMERAL_GPP_CABANG_RK_TARGET_DDL_TEST_ONLY.sql
