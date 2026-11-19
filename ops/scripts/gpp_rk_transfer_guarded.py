@@ -125,6 +125,26 @@ def target_ready(cursor) -> None:
     own, cabang, csb, anonymous, authenticated = cursor.fetchone()
     if not own or cabang or csb or anonymous or authenticated:
         raise ValueError("NO-GO: GPP tenant table privileges unsafe")
+    # PostgreSQL permission lists such as 'SELECT,INSERT' mean ANY privilege.
+    # Check each required service grant and the period table independently.
+    cursor.execute("""
+        SELECT
+          (SELECT relrowsecurity FROM pg_class WHERE oid=%s::regclass),
+          has_table_privilege('gpro_gpp_pusat',%s,'SELECT'),
+          has_table_privilege('gpro_gpp_cabang',%s,'SELECT'),
+          has_table_privilege('gpro_csb_finance',%s,'SELECT'),
+          has_table_privilege('anon',%s,'SELECT'),
+          has_table_privilege('authenticated',%s,'SELECT')
+    """, (PERIOD_TABLE,) * 6)
+    period_rls, period_own, period_cabang, period_csb, period_anon, period_auth=cursor.fetchone()
+    if not period_rls or not period_own or any((period_cabang,period_csb,period_anon,period_auth)):
+        raise ValueError("NO-GO: GPP period metadata privacy or RLS unsafe")
+    for table in (TARGET_TABLE,PERIOD_TABLE):
+        for privilege in ("SELECT","INSERT","UPDATE","DELETE"):
+            cursor.execute("SELECT has_table_privilege('service_role',%s,%s)",
+                           (table,privilege))
+            if not cursor.fetchone()[0]:
+                raise ValueError("NO-GO: service_role lacks required "+privilege+" on GPP tenant table")
 
 
 def read_rows(cursor, table: str):
