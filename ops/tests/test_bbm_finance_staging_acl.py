@@ -62,7 +62,10 @@ class AnonStageReviewTests(unittest.TestCase):
             "rows_found <> 0",
             "c.relrowsecurity",
             "has_table_privilege('anon', relation_oid, 'INSERT')",
-            "has_table_privilege('service_role', relation_oid, 'SELECT,INSERT,UPDATE,DELETE')",
+            "has_table_privilege('service_role',relation_oid,'SELECT')",
+            "has_table_privilege('service_role',relation_oid,'INSERT')",
+            "has_table_privilege('service_role',relation_oid,'UPDATE')",
+            "has_table_privilege('service_role',relation_oid,'DELETE')",
             "staging table contains records",
             "post-revoke privileges invalid",
         ):
@@ -86,6 +89,11 @@ class AnonStageReviewTests(unittest.TestCase):
         lock_sql=sql[lock_at:preflight_at]
         for table in EXPECTED:
             self.assertIn("public."+table,lock_sql)
+
+    def test_privilege_check_never_assumes_comma_list_means_all(self):
+        self.assertNotIn("'SELECT,INSERT,UPDATE,DELETE'",self.review)
+        for privilege in ("SELECT","INSERT","UPDATE","DELETE"):
+            self.assertEqual(self.review.count("has_table_privilege('service_role',relation_oid,'"+privilege+"')"),2)
 
     def test_only_one_scope_of_anon_revocation(self):
         body=re.sub(r"--[^\n]*","",self.review)
