@@ -180,12 +180,13 @@ def main():
         except ImportError:
             raise ManifestBlocked("psycopg3 required in private operator environment") from None
         with psycopg.connect(source_dsn,connect_timeout=12,sslmode="require",
-                             row_factory=dict_row) as conn:
+                             autocommit=True,row_factory=dict_row) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
                 check_snapshot(cursor,args)
                 cursor.execute(
-                    "SELECT "+",".join(COLUMNS)+" FROM public.klarin_stock_claim_attachments ORDER BY id")
+                    "SELECT id::text AS id,"+",".join(COLUMNS[1:])+
+                    " FROM public.klarin_stock_claim_attachments ORDER BY id")
                 rows=cursor.fetchall()
                 cursor.execute("""
                     SELECT name,COALESCE((metadata->>'size')::bigint,-1) AS size
@@ -204,7 +205,9 @@ def main():
             "ready_for_cutover":False,
         },sort_keys=True))
         return 0
-    except (ManifestBlocked,ByteAuditBlocked,ValueError,OSError):
+    except Exception:
+        # psycopg and HTTPS failures may include connection details in exception
+        # strings. Suppress every raw exception before it reaches operator logs.
         print("NO-GO: source restore, frozen inventory, private bytes, or local manifest validation failed",
               file=sys.stderr)
         return 2
