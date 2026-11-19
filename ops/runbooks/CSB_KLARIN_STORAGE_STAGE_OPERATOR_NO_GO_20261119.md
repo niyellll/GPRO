@@ -19,6 +19,32 @@
 5. In the approved isolated operator environment, provision two **different server-only** authenticated Storage credentials via a protected secret mechanism into environment variables `GPRO_CSB_KLARIN_SOURCE_STORAGE_SERVICE_KEY` and `GPRO_CSB_KLARIN_TARGET_STORAGE_SERVICE_KEY`. Legacy service_role JWT keys may work when the REST gateway permits them; if modern keys are in use, test actual permissions using an approved private route. On 401/403 the script must fail; **never** fall back to public buckets or disable authentication.
 6. Prepare two **separate encrypted, access-restricted** directories with owner-only permissions (on POSIX: `mkdir -m 700`). The script saves original and target readbacks without overwriting existing local files. These directory trees are NOT GitHub artifacts.
 
+## Private manifest generation (new operator helper; no GitHub/customer bytes)
+
+The original `expected_sha256` values must be obtained from **real source Storage bytes**, not inferred from PostgreSQL `storage.objects` metadata or fabricated. To avoid copying customer UUIDs/file names into a chat or GitHub PR, operators can now run `ops/scripts/csb_klarin_private_manifest_guarded.py` on their **own approved, encrypted** workstation.
+
+**Default** `python3 ops/scripts/csb_klarin_private_manifest_guarded.py` performs no network request or write. Once the full seven-project backup has genuinely been restored in isolation, the original tenant writes have been frozen, and fresh aggregate snapshot digests have been recorded, the operator obtains two secrets privately:
+- `GPRO_CSB_KLARIN_SOURCE_DSN` (pinned legacy source Postgres **postgres** owner connection, TLS required)
+- `GPRO_CSB_KLARIN_SOURCE_STORAGE_SERVICE_KEY` (server-only original private Storage authentication key)
+
+The generator opens a **repeatable-read, read-only PostgreSQL transaction** and validates the frozen source state hash/version and original source `storage.objects` inventory, then downloads each of the six original authenticated private objects **without changing any source row/file**, computes real SHA-256 and writes a manifest exclusively to a protected local path (0600 mode; parent 0700). Source PostgreSQL `id` is converted to a string only inside the operator machine.
+
+```bash
+python3 ops/scripts/csb_klarin_private_manifest_guarded.py \
+  --write-private-manifest \
+  --manifest-out /secure/csb-private-manifest.json \
+  --approved-change-ref '<signed change identifier>' \
+  --verified-restore-ref '<actual isolated restore evidence>' \
+  --frozen-inventory-ref '<frozen inventory attestation>' \
+  --confirm-frozen-writes \
+  --source-version '<fresh source version>' \
+  --source-state-sha256 '<fresh source state::text SHA256>' \
+  --expected-objects 6 \
+  --expected-total-bytes 2918989
+```
+
+Use these example count/byte values **only** after the source is actually frozen and rechecked. **Do not** paste the resulting JSON into GitHub/chat or attach it to CI. The generator's output is a **private manifest**, not a backup: preserve the independently restored physical Storage backup too. Once created, pass the private manifest path to the next two guarded tools.
+
 ## Step 1: offline / no-network rehearsal
 
 ```bash
