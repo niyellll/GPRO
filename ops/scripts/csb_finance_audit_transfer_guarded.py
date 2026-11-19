@@ -13,7 +13,7 @@ import argparse
 import os
 import re
 import sys
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 SOURCE_REF = "lmbvbgkqvidtkzxtvtpe"
 TARGET_REF = "fdhqidjltlihzdcbqfrd"
@@ -31,20 +31,44 @@ class AuditTransferBlocked(ValueError):
 
 
 def assert_pinned_dsn(dsn: str, expected_ref: str) -> None:
+    """Only owner-role SQL on the exact intended Supabase project, strict TLS.
+
+    A pooler hostname suffix alone is NOT enough to prove project identity:
+    direct hosts must use postgres and pooler usernames postgres.<ref>.
+    Never allow a fallback to shared or cross-tenant database credentials.
+    """
+    if expected_ref not in (SOURCE_REF, TARGET_REF):
+        raise AuditTransferBlocked("Unexpected migration project")
     try:
         u = urlsplit(dsn)
         host = (u.hostname or "").lower()
         username = unquote(u.username or "")
-        direct = host == "db." + expected_ref + ".supabase.co"
-        pooler = host.endswith(".pooler.supabase.com") and username.endswith("." + expected_ref)
-        if u.scheme not in ("postgres","postgresql") or not (direct or pooler):
-            raise AuditTransferBlocked("Endpoint project or protocol not allowlisted")
-        if not u.password and not os.environ.get("PGPASSWORD"):
-            raise AuditTransferBlocked("Password must be supplied in protected process environment")
-        if u.query and re.search(r"(?:^|&)sslmode=(?:disable|allow|prefer)(?:&|$)", u.query, re.I):
-            raise AuditTransferBlocked("Insecure TLS setting")
+        direct = (
+            host == "db." + expected_ref + ".supabase.co"
+            and username == "postgres"
+            and u.port == 5432
+        )
+        pooler = (
+            bool(re.fullmatch(r"[a-z0-9-]+\\.pooler\\.supabase\\.com", host))
+            and username == "postgres." + expected_ref
+            and u.port in (5432, 6543)
+        )
+        options = parse_qs(u.query, keep_blank_values=True, strict_parsing=True) if u.query else {}
+        tls = options.get("sslmode", ["require"])
+        password_present = bool(u.password or os.environ.get("PGPASSWORD"))
+        if not (
+            u.scheme in ("postgres", "postgresql")
+            and (direct or pooler)
+            and u.path == "/postgres"
+            and not u.fragment
+            and password_present
+            and set(options).issubset({"sslmode"})
+            and len(tls) == 1
+            and tls[0] in ("require", "verify-full")
+        ):
+            raise AuditTransferBlocked("Endpoint identity, TLS or database not allowlisted")
     except (ValueError, TypeError):
-        raise AuditTransferBlocked("Endpoint validation failed; expected pinned project") from None
+        raise AuditTransferBlocked("Endpoint identity, TLS or project not allowlisted") from None
 
 
 def parser() -> argparse.ArgumentParser:
