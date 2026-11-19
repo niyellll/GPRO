@@ -49,7 +49,7 @@ def assert_pinned_dsn(dsn: str, expected_ref: str) -> None:
             and u.port == 5432
         )
         pooler = (
-            bool(re.fullmatch(r"[a-z0-9-]+\\.pooler\\.supabase\\.com", host))
+            bool(re.fullmatch(r"[a-z0-9-]+\.pooler\.supabase\.com", host))
             and username == "postgres." + expected_ref
             and u.port in (5432, 6543)
         )
