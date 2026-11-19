@@ -38,6 +38,8 @@ TENANTS = (
     ("gpp_stock", "gpp_stock_old", "klarin_base", "gpp_stock", "gpro_gpp_stock"),
 )
 TRANSIENT_TABLES = frozenset(("login_rate_limits", "klarin_sessions"))
+FINANCE_ROLES = ("gpro_csb_finance","gpro_gpp_pusat","gpro_gpp_cabang")
+KLARIN_ROLES = ("gpro_csb_klarin","gpro_gpp_stock")
 USER_SESSION_COLUMNS = frozenset((
     "active_session_id", "active_session_expires_at",
     "active_session_last_seen_at", "auth_session_version", "updated_at",
@@ -152,16 +154,26 @@ def inspect_tenant(source_cursor,target_cursor,tenant: str,
              for t in sorted(set(src)&set(dst))]
     critical=[r for r in results if r["kind"]=="BUSINESS" and r["status"]!="MATCH"]
     transient=[r for r in results if r["kind"]=="TRANSIENT" and r["status"]!="MATCH"]
+    project_roles = FINANCE_ROLES if target_schema in (
+        "csb_finance","gpp_piutang","gpp_finance_cabang"
+    ) else KLARIN_ROLES
+    if tenant_role not in project_roles:
+        raise NoGo("Tenant role does not belong to destination BASE")
+    others=[role for role in project_roles if role!=tenant_role]
     target_cursor.execute("""
       SELECT count(*)::int,
       count(*) FILTER(WHERE c.relrowsecurity)::int,
       bool_and(has_table_privilege(%s,c.oid,'SELECT')) AS tenant_read,
       bool_and(NOT has_table_privilege('anon',c.oid,'SELECT')) AS anon_denied,
-      bool_and(NOT has_table_privilege('authenticated',c.oid,'SELECT')) AS browser_denied
+      bool_and(NOT has_table_privilege('authenticated',c.oid,'SELECT')) AS browser_denied,
+      bool_and(NOT EXISTS (
+         SELECT 1 FROM unnest(%s::text[]) AS other(role)
+         WHERE has_table_privilege(other.role,c.oid,'SELECT')
+      )) AS cross_tenant_denied
       FROM pg_class c JOIN pg_namespace n ON c.relnamespace=n.oid
       WHERE n.nspname=%s AND c.relkind='r' AND NOT c.relispartition
-    """,(tenant_role,target_schema))
-    table_count,rls_count,read_ok,anon_ok,browser_ok=target_cursor.fetchone()
+    """,(tenant_role,others,target_schema))
+    table_count,rls_count,read_ok,anon_ok,browser_ok,cross_denied=target_cursor.fetchone()
     return {
         "tenant":tenant, "common_tables":len(results),
         "business_matching":sum(r["kind"]=="BUSINESS" and r["status"]=="MATCH" for r in results),
@@ -170,8 +182,8 @@ def inspect_tenant(source_cursor,target_cursor,tenant: str,
         "extra_target_tables":sorted(set(dst)-set(src)),
         "target_rls_tables":int(rls_count),
         "target_total_tables":int(table_count),
-        "acl_pass":bool(read_ok and anon_ok and browser_ok and table_count==rls_count
-                         and table_count>0),
+        "acl_pass":bool(read_ok and anon_ok and browser_ok and cross_denied
+                         and table_count==rls_count and table_count>0),
     }
 
 def claim_bucket_inventory(cursor,bucket: str) -> dict:
@@ -248,7 +260,8 @@ def live_report() -> dict:
         for name,(ref,env_name) in PROJECTS.items():
             dsn=os.environ.get(env_name,"")
             pinned_owner_dsn(dsn,ref)
-            c=psycopg.connect(dsn,sslmode="require",connect_timeout=12,autocommit=True)
+            mode=parse_qs(urlsplit(dsn).query).get("sslmode",["require"])[0]
+            c=psycopg.connect(dsn,sslmode=mode,connect_timeout=12,autocommit=True)
             conns[name]=c
             with c.cursor() as cur:
                 cur.execute("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
@@ -261,9 +274,9 @@ def live_report() -> dict:
             with conns[source].cursor() as sc,conns[target].cursor() as tc:
                 tenants.append(inspect_tenant(sc,tc,tenant,schema,role))
         with conns["finance_base"].cursor() as c:
-            fr=dedicated_role_credentials(c,("gpro_csb_finance","gpro_gpp_pusat","gpro_gpp_cabang"))
+            fr=dedicated_role_credentials(c,FINANCE_ROLES)
         with conns["klarin_base"].cursor() as c:
-            kr=dedicated_role_credentials(c,("gpro_csb_klarin","gpro_gpp_stock"))
+            kr=dedicated_role_credentials(c,KLARIN_ROLES)
         with conns["csb_klarin_old"].cursor() as c:
             source_files=claim_bucket_inventory(c,"klarin-private-attachments")
         with conns["klarin_base"].cursor() as c:
