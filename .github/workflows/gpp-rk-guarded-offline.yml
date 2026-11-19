@@ -6,6 +6,8 @@ on:
     paths:
       - 'ops/scripts/gpp_rk_transfer_guarded.py'
       - 'ops/tests/test_gpp_rk_guarded.py'
+      - 'ops/scripts/csb_finance_audit_transfer_guarded.py'
+      - 'ops/tests/test_csb_finance_audit_transfer_guarded.py'
       - 'ops/scripts/csb_klarin_claim_delta_plan.py'
       - 'ops/tests/test_csb_klarin_claim_delta_plan.py'
       - 'ops/scripts/csb_klarin_storage_byte_audit.py'
@@ -21,6 +23,8 @@ on:
     paths:
       - 'ops/scripts/gpp_rk_transfer_guarded.py'
       - 'ops/tests/test_gpp_rk_guarded.py'
+      - 'ops/scripts/csb_finance_audit_transfer_guarded.py'
+      - 'ops/tests/test_csb_finance_audit_transfer_guarded.py'
       - 'ops/scripts/csb_klarin_claim_delta_plan.py'
       - 'ops/tests/test_csb_klarin_claim_delta_plan.py'
       - 'ops/scripts/csb_klarin_storage_byte_audit.py'
@@ -46,6 +50,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Compile Python syntax without database connections
-        run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py ops/scripts/csb_klarin_storage_byte_audit.py ops/tests/test_csb_klarin_storage_byte_audit.py ops/tests/test_bbm_finance_staging_acl.py ops/tests/test_two_base_tenant_role_gate.py
+        run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_finance_audit_transfer_guarded.py ops/tests/test_csb_finance_audit_transfer_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py ops/scripts/csb_klarin_storage_byte_audit.py ops/tests/test_csb_klarin_storage_byte_audit.py ops/tests/test_bbm_finance_staging_acl.py ops/tests/test_two_base_tenant_role_gate.py
       - name: Run isolated dry-run and security contract tests
         run: python3 -m unittest discover -s ops/tests -p 'test_*.py' -v
