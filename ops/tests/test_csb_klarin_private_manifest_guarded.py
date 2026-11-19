@@ -171,7 +171,7 @@ class ManifestGeneratorTests(unittest.TestCase):
     def test_private_customer_ids_not_in_stdout_or_test_output(self):
         code=SCRIPT.read_text(encoding="utf-8")
         self.assertIn("GPRO_CSB_KLARIN_SOURCE_DSN",code)
-        self.assertIn("GPRO_CSB_KLARIN_SOURCE_STORAGE_SERVICE_KEY",code) if False else None
+        self.assertIn("SOURCE_SECRET",code)
         self.assertIn("print(json.dumps({",code)
         self.assertNotIn("print(row",code)
         self.assertNotIn("print(entries",code)
