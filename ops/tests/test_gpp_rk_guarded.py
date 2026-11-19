@@ -71,6 +71,14 @@ class GuardedTransferTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.fingerprint_query("csb_finance")
 
+    def test_service_crud_privileges_and_period_rls_are_independently_required(self):
+        text = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("period_rls", text)
+        self.assertIn("period_own", text)
+        self.assertIn('for privilege in ("SELECT","INSERT","UPDATE","DELETE"):',text)
+        self.assertIn("has_table_privilege('service_role',%s,%s)",text)
+        self.assertNotIn("'SELECT,INSERT,UPDATE,DELETE'",text)
+
     def test_static_source_does_not_hardcode_database_password(self):
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("GPRO_RK_SOURCE_DSN", text)
