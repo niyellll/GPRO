@@ -69,7 +69,10 @@ BEGIN
        OR has_table_privilege('anon', relation_oid, 'SELECT') THEN
       RAISE EXCEPTION 'NO-GO: staging table anon privilege inventory changed';
     END IF;
-    IF NOT has_table_privilege('service_role', relation_oid, 'SELECT,INSERT,UPDATE,DELETE') THEN
+    IF NOT (has_table_privilege('service_role',relation_oid,'SELECT')
+            AND has_table_privilege('service_role',relation_oid,'INSERT')
+            AND has_table_privilege('service_role',relation_oid,'UPDATE')
+            AND has_table_privilege('service_role',relation_oid,'DELETE')) THEN
       RAISE EXCEPTION 'NO-GO: service role permissions differ from inventory';
     END IF;
     EXECUTE format('SELECT count(*) FROM %I.%I', 'public', stage_name) INTO rows_found;
@@ -112,7 +115,10 @@ BEGIN
     IF relation_oid IS NULL OR
        has_table_privilege('anon',relation_oid,'INSERT') OR
        has_table_privilege('anon',relation_oid,'SELECT') OR
-       NOT has_table_privilege('service_role',relation_oid,'SELECT,INSERT,UPDATE,DELETE') THEN
+       NOT (has_table_privilege('service_role',relation_oid,'SELECT')
+            AND has_table_privilege('service_role',relation_oid,'INSERT')
+            AND has_table_privilege('service_role',relation_oid,'UPDATE')
+            AND has_table_privilege('service_role',relation_oid,'DELETE')) THEN
       RAISE EXCEPTION 'NO-GO: post-revoke privileges invalid; rollback';
     END IF;
   END LOOP;
