@@ -2,7 +2,7 @@
 """Stage original private GPP Stock Storage bytes between pinned Supabase projects.
 
 Default: OFFLINE DRY RUN only (no HTTP, no file I/O beyond private manifest).
-Apply: operator-attested backup restore + freeze + complete 6-object SHA256
+Apply: operator-attested backup restore + freeze + complete frozen-source SHA256
 manifest + two *distinct* server-only Supabase credentials in environment.
 
 Does NOT copy database state or cut over app traffic; never delete or upsert
