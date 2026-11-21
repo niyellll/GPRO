@@ -132,7 +132,7 @@ class GppStockStateCasTests(unittest.TestCase):
         self.assertIn("LOCK TABLE gpp_stock.klarin_stock_claim_attachments",code)
         self.assertIn("FOR UPDATE",code)
         self.assertIn("WHERE workspace_key=%s AND version=%s AND state=%s::jsonb",code)
-        self.assertIn("role]!=".replace("role]","role\"]"),code)
+        self.assertIn('tc.fetchone()["role"]!="postgres"',code)
         self.assertIn("gpro_csb_klarin",code)
         self.assertIn("UPDATE gpp_stock.klarin_stock_claim_app_state",code)
         self.assertNotIn("UPDATE gpp_stock.users",code)
