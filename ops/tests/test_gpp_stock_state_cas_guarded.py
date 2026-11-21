@@ -105,8 +105,8 @@ class GppStockStateCasTests(unittest.TestCase):
             state_delta(src,nonclaim)
 
     def test_foreign_workspace_attachment_is_blocked(self):
-        cursor=FakeCursor([[{"id":"synthetic","workspace_key":"gpp_cabang",
-                            "owner_type":"klaim"}]])
+        cursor=FakeCursor([{"id":"synthetic","workspace_key":"gpp_cabang",
+                            "owner_type":"klaim"}])
         with self.assertRaises(mod.GppStateBlocked):
             mod.attachment_rows(cursor,"gpp_stock")
         self.assertIn("ORDER BY id",cursor.executed[0][0])
