@@ -34,6 +34,8 @@ on:
       - 'ops/tests/test_gpp_stock_storage_stage_guarded.py'
       - 'ops/scripts/gpp_stock_private_manifest_guarded.py'
       - 'ops/tests/test_gpp_stock_private_manifest_guarded.py'
+      - 'ops/scripts/gpp_stock_state_cas_guarded.py'
+      - 'ops/tests/test_gpp_stock_state_cas_guarded.py'
       - 'ops/tests/test_bbm_finance_staging_acl.py'
       - 'ops/sql/bbm_finance_v635_staging_anon_acl_READ_ONLY.sql'
       - 'ops/sql/bbm_finance_v635_stage_revoke_anon_REVIEW_ONLY.sql'
@@ -74,6 +76,8 @@ on:
       - 'ops/tests/test_gpp_stock_storage_stage_guarded.py'
       - 'ops/scripts/gpp_stock_private_manifest_guarded.py'
       - 'ops/tests/test_gpp_stock_private_manifest_guarded.py'
+      - 'ops/scripts/gpp_stock_state_cas_guarded.py'
+      - 'ops/tests/test_gpp_stock_state_cas_guarded.py'
       - 'ops/tests/test_bbm_finance_staging_acl.py'
       - 'ops/sql/bbm_finance_v635_staging_anon_acl_READ_ONLY.sql'
       - 'ops/sql/bbm_finance_v635_stage_revoke_anon_REVIEW_ONLY.sql'
@@ -97,7 +101,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Compile Python syntax without database connections
-        run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_finance_audit_transfer_guarded.py ops/tests/test_csb_finance_audit_transfer_guarded.py ops/scripts/gpp_pusat_user_delta_guarded.py ops/tests/test_gpp_pusat_user_delta_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py ops/scripts/csb_klarin_state_transfer_guarded.py ops/tests/test_csb_klarin_state_transfer_guarded.py ops/scripts/csb_klarin_storage_byte_audit.py ops/tests/test_csb_klarin_storage_byte_audit.py ops/scripts/csb_klarin_storage_stage_guarded.py ops/tests/test_csb_klarin_storage_stage_guarded.py ops/scripts/csb_klarin_private_manifest_guarded.py ops/tests/test_csb_klarin_private_manifest_guarded.py ops/scripts/gpp_stock_storage_stage_guarded.py ops/tests/test_gpp_stock_storage_stage_guarded.py ops/scripts/gpp_stock_private_manifest_guarded.py ops/tests/test_gpp_stock_private_manifest_guarded.py ops/tests/test_bbm_finance_staging_acl.py ops/tests/test_two_base_tenant_role_gate.py ops/scripts/two_base_live_readiness_gate.py ops/tests/test_two_base_live_readiness_gate.py
+        run: python3 -m py_compile ops/scripts/gpp_rk_transfer_guarded.py ops/tests/test_gpp_rk_guarded.py ops/scripts/csb_finance_audit_transfer_guarded.py ops/tests/test_csb_finance_audit_transfer_guarded.py ops/scripts/gpp_pusat_user_delta_guarded.py ops/tests/test_gpp_pusat_user_delta_guarded.py ops/scripts/csb_klarin_claim_delta_plan.py ops/tests/test_csb_klarin_claim_delta_plan.py ops/scripts/csb_klarin_state_transfer_guarded.py ops/tests/test_csb_klarin_state_transfer_guarded.py ops/scripts/csb_klarin_storage_byte_audit.py ops/tests/test_csb_klarin_storage_byte_audit.py ops/scripts/csb_klarin_storage_stage_guarded.py ops/tests/test_csb_klarin_storage_stage_guarded.py ops/scripts/csb_klarin_private_manifest_guarded.py ops/tests/test_csb_klarin_private_manifest_guarded.py ops/scripts/gpp_stock_storage_stage_guarded.py ops/tests/test_gpp_stock_storage_stage_guarded.py ops/scripts/gpp_stock_private_manifest_guarded.py ops/tests/test_gpp_stock_private_manifest_guarded.py ops/scripts/gpp_stock_state_cas_guarded.py ops/tests/test_gpp_stock_state_cas_guarded.py ops/tests/test_bbm_finance_staging_acl.py ops/tests/test_two_base_tenant_role_gate.py ops/scripts/two_base_live_readiness_gate.py ops/tests/test_two_base_live_readiness_gate.py
       - name: Run isolated dry-run and security contract tests
         run: python3 -m unittest discover -s ops/tests -p 'test_*.py' -v
       - name: Prove seven-project readiness tool defaults to no network
