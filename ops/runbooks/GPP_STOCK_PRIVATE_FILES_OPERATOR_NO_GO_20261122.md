@@ -31,7 +31,7 @@ The generator takes these flags:
 
 ```text
 --write-private-manifest
---manifest /secure/gpp-private-manifest.json
+--manifest-out /secure/gpp-private-manifest.json
 --approved-change-ref <signed-ticket-ref>
 --verified-restore-ref <actual-isolated-restore-proof>
 --frozen-inventory-ref <actual-write-freeze-proof>
