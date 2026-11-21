@@ -1,4 +1,43 @@
 # Two-BASE — offline backup and restore gate (NO-GO)
+
+## PENTING, 22 November 2026 — Supabase CLI v3
+
+Mulai November 2026, **Supabase CLI v3** menjalankan **db dump** terhadap database lokal secara default jika target tidak ditulis eksplisit. Backup database Supabase produksi wajib menggunakan flag --remote=<exact-project-ref>; flag lama --db-url sudah deprecated. Operator tidak boleh menganggap suksesnya dump lokal sama dengan backup tujuh project ini.
+
+Sumber resmi terbaru: https://supabase.com/docs/guides/local-development/cli/migrating-to-v3 dan https://supabase.com/docs/reference/cli/supabase-db-remote
+
+### Jalur backup PostgreSQL lokal yang aman untuk operator Windows
+
+Program baru: ops/scripts/two_base_backup_cli_v3_guarded.py. Ia mem-pin **tepat tujuh Supabase project** (dua BASE + lima legacy). Default tanpa argumen: **offline, tidak terhubung ke database, tidak membuat file**. Tidak membutuhkan connection string atau password pada command line; gunakan Supabase CLI v3 dengan login operator pribadi yang sah.
+
+Siapkan Docker Desktop, Supabase CLI v3 yang telah direview, Python 3, dan direktori kosong di drive terenkripsi dengan akses terbatas. Verifikasi versi dan subcommand dump terlebih dahulu:
+
+    supabase --version
+    supabase db dump --help
+    python ops/scripts/two_base_backup_cli_v3_guarded.py
+
+HANYA setelah operator memberi persetujuan change dan memastikan direktori pribadi telah tersedia, jalankan pada workstation operator:
+
+    python ops/scripts/two_base_backup_cli_v3_guarded.py --backup-pg --backup-root "D:\GPRO-Encrypted-Backups" --approved-change-ref "YOUR-APPROVED-TICKET" --confirm-private-encrypted --confirm-operator-owns-all-seven
+
+Skrip tersebut membuat 21 berkas SQL pada folder run baru eksklusif, tanpa overwrite: masing-masing roles.sql, schema.sql, data.sql pada semua tujuh project. Tiap command selalu menyertakan --remote=<project-ref> eksplisit, misalnya:
+
+    supabase db dump -f roles.sql --role-only --remote=fdhqidjltlihzdcbqfrd
+    supabase db dump -f schema.sql --remote=fdhqidjltlihzdcbqfrd
+    supabase db dump -f data.sql --data-only --use-copy -x storage.buckets_vectors -x storage.vector_indexes --remote=fdhqidjltlihzdcbqfrd
+
+Nama file sebenarnya menggunakan path absolut lokal. Skrip membaca SHA-256 byte dari semua 21 file dan menulis private-pg-export-manifest.json di direktori run terenkripsi, tanpa mencetak SQL, token, DSN, private path atau isi customer. Mode hash recheck di workstation (ganti folder run dengan nama yang benar):
+
+    python ops/scripts/two_base_backup_cli_v3_guarded.py --verify-private "D:\GPRO-Encrypted-Backups\seven-base-pg-YYYYMMDDTHHMMSSZ"
+
+Laporan verifikasi SHA-256 hanya boleh mengonfirmasi integritas 21 berkas SQL. Semua indikator freeze lintas project, backup fisik Storage asli, uji restore terisolasi, kesiapan cutover dan penghapusan lima project tetap **FALSE**, meskipun seluruh hash cocok. Skrip tidak dapat membuktikan Windows ACL/enkripsi disk secara otomatis. Operator wajib memeriksa dan menjaga akses backup secara privat.
+
+CLI v3 dapat meminta perubahan network ban saat dump remote. **Jangan** tambahkan --yes secara otomatis untuk mengubah network access: evaluasi bersama pemilik layanan. Jika export gagal, script STOP; folder parsial tidak dihapus otomatis agar dapat diaudit. Jangan menaruh dump SQL, password, source file, manifest berisi nama objek, atau kunci Storage ke GitHub, chat, Vercel, atau CI.
+
+**Perlu langkah terpisah sebelum release:** original file bytes setiap Storage bucket (termasuk PDF/XLSX) beserta SHA-256, Auth/managed schema customizations dan setting layanan, restore nyata ke lingkungan isolated-existing, verifikasi row hash/permissions, login/claim/journal/upload/download, pengukuran RPO/RTO dan rollback. Dump SQL tidak dengan sendirinya menyertakan semua konfigurasi layanan Supabase maupun seluruh file Storage. Untuk final snapshot, bekukan tulis aplikasi karena 21 dump yang dijalankan berurutan bukan snapshot atomik lintas project. CSB Singapore→Mumbai memerlukan persetujuan pengendali data. Tidak boleh membuat Supabase project/branch berbayar atau menimpa BASE aktif.
+
+**Keputusan: NO-GO** sampai semua backup, file Storage asli, restore drill, autentikasi tenant, quality gate Vercel dan owner sign-off lulus.
+
 **Last direct read-only inventory: 19 November 2026, Asia/Jakarta.**
 **Applies to all 7 currently active Supabase projects; this document authorizes NO write or deletion.**
 
