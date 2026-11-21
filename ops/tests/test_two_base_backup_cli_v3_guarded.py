@@ -111,6 +111,7 @@ class SevenProjectPgBackupV3Tests(unittest.TestCase):
                                    runner=self.synthetic_runner)
         public=Path(self.tmp.name)
         if os.name=="posix":
+            public.chmod(0o755)  # tempfile roots are 0700 by default
             with self.assertRaises(mod.BackupBlocked):
                 mod.private_root(str(public))
 
