@@ -153,6 +153,19 @@ class TwoBaseLiveReadinessTests(unittest.TestCase):
         self.assertIn("storage.buckets",cursor.last_query)
         self.assertEqual(cursor.last_params,("gpro-csb-private-attachments",))
 
+    def test_gpp_stock_private_source_inventory_included_without_fake_transfer(self):
+        cursor=FakeCursor([(False,2,4231865)])
+        self.assertEqual(gate.claim_bucket_inventory(cursor,
+            "gpp-klarin-attachments"),files(2,4231865))
+        people=[tenant_result(x) for x in ("csb_finance","gpp_pusat",
+            "gpp_cabang","csb_klarin","gpp_stock")]
+        report=gate.assemble_report(people,roles(3),roles(2),
+            files(),files(),files(2,4231865))
+        self.assertEqual(report["gpp_stock_legacy_source_storage"]["objects"],2)
+        self.assertEqual(report["gpp_stock_legacy_source_storage"]["metadata_bytes"],4231865)
+        self.assertFalse(report["gpp_stock_original_target_bytes_verified"])
+        self.assertFalse(report["cutover_ready"])
+
     def test_dedicated_login_role_gate_checks_real_password_presence(self):
         c=FakeCursor([(3,3,0)])
         value=gate.dedicated_role_credentials(c,gate.FINANCE_ROLES)
@@ -166,7 +179,7 @@ class TwoBaseLiveReadinessTests(unittest.TestCase):
                  [{"table":"users","kind":"BUSINESS","status":"DRIFT",
                    "source_count":6,"target_count":5}])]
         people+= [tenant_result(x) for x in ("csb_finance","gpp_cabang","csb_klarin","gpp_stock")]
-        result=gate.assemble_report(people,roles(3),roles(2),files(),files())
+        result=gate.assemble_report(people,roles(3),roles(2),files(),files(),files(2,4231865))
         self.assertEqual(result["business_table_drift_count"],1)
         self.assertFalse(result["business_data_parity_pass"])
         self.assertFalse(result["cutover_ready"])
@@ -174,14 +187,14 @@ class TwoBaseLiveReadinessTests(unittest.TestCase):
     def test_no_go_if_private_file_object_count_misses_six(self):
         people=[tenant_result(x) for x in ("csb_finance","gpp_pusat",
                      "gpp_cabang","csb_klarin","gpp_stock")]
-        report=gate.assemble_report(people,roles(3),roles(2),files(),files(0,0))
+        report=gate.assemble_report(people,roles(3),roles(2),files(),files(0,0),files(2,4231865))
         self.assertFalse(report["csb_storage_metadata_parity_pass"])
         self.assertFalse(report["cutover_ready"])
 
     def test_all_green_metadata_still_never_authorizes_project_deletion(self):
         people=[tenant_result(x) for x in ("csb_finance","gpp_pusat",
                      "gpp_cabang","csb_klarin","gpp_stock")]
-        report=gate.assemble_report(people,roles(3),roles(2),files(),files())
+        report=gate.assemble_report(people,roles(3),roles(2),files(),files(),files(2,4231865))
         self.assertTrue(report["business_data_parity_pass"])
         self.assertTrue(report["csb_storage_metadata_parity_pass"])
         self.assertFalse(report["cutover_ready"])
