@@ -54,6 +54,20 @@ Stage behavior: source authenticated GET, SHA-256 before upload, target authenti
 
 **Important:** The current stage helper verifies content hashes and approved inventory but does not itself re-query GPP live state/ACL. Before `--apply`, the operator must independently rerun the frozen source/target SQL checkpoints for both Pusat and Cabang and confirm the private target bucket. Do not treat a supplied `--target-state-sha256` flag as proof of that live comparison.
 
+## Gate D — GPP Pusat-only metadata and business-state CAS (operator-only)
+
+A separate guarded script is now available: `ops/scripts/gpp_stock_state_cas_guarded.py`. It must **never** run before physical Storage stage and an independently tested isolated seven-project restore. Its default invocation requires no credentials and performs **no network operation**.
+
+**Last LIVE unfrozen aggregate, 22 Nov 2026**: GPP Pusat source/target state versions 6 / 4, 8 / 0 `monitoringKlaim`, 3 / 1 `auditLogs`, 1 / 0 `uploadBatches`; the other 17 state keys match SHA-256. Hashes of stable per-record IDs confirm exactly 8 missing claims, 2 missing audit events and 1 missing batch; **no target-only IDs and no same-ID content conflicts**. Both original GPP source attachments belong to existing source claim IDs. GPP Cabang state version 1 / 1 and JSON state hash match; it must not be modified. **These are unfrozen observations**, not proof that the rows are unchanged when the operator runs.
+
+1. Check `--live` with pinned private operator PostgreSQL DSNs `GPRO_GPP_STOCK_SOURCE_DSN` and `GPRO_GPP_STOCK_TARGET_DSN`, never through browser, chat, CI, Vercel public variables, or the repository. This mode opens read-only snapshots, verifies tenant RLS and negative cross-tenant grants, compares both Cabang snapshots, and prints **aggregate counts only**. A failed merge/conflict blocks immediately.
+2. Once physical source+target file bytes have been independently SHA-256 verified and both local readback directories are protected, and verified full PG/Storage restore + application freeze and owner approval are evidenced, run `--live --apply` with:
+   - `--approved-change-ref` and `--verified-restore-ref` pointing to independently reviewed private evidence, plus `--confirm-frozen-writes`
+   - exact frozen `--source-version`, `--target-version`, `--source-sha256`, `--target-sha256`, `--cabang-version`, `--cabang-sha256`
+   - exact frozen `--expected-attachments`, `--expected-total-bytes`, `--manifest`, `--source-root`, `--target-root`
+3. Protected GPP Pusat-only PostgreSQL transaction is `SERIALIZABLE` and checks owner role, live immutable source/target state hashes, Cabang equality, existing RLS and tenant grants, private destination bucket, complete Storage metadata, actual local source/target byte proof, and the subset-only claim/audit/upload-batch delta. It inserts missing GPP Pusat attachment metadata **without upsert or deletion**, performs a CAS update only on `workspace_key='gpp_pusat'`, rereads exact final state and metadata, and checks Cabang was unchanged before COMMIT. On any preflight/conflict failure it ROLLBACKs.
+4. A database transaction is **not atomic with Storage uploads**. Re-validate original and destination private bytes after commit and test GPP Pusat read/write, downloads, audit, upload, browser and CSB tenant denial, and GPP Cabang unchanged. Production cutover still requires separate owner signoff, monitoring, and tested rollback.
+
 ## Gate D — NOT implemented by the byte-stage tool
 
 After physically verified staging, do a **separate** approved, serializable/optimistic-CAS metadata and GPP Pusat claim state reconciliation with exact frozen source/target hashes and RLS. Preserve GPP Cabang version 1 and records verbatim. Do not copy stale sessions, overwrite a user's rows, or copy Pusat claims into Cabang. Test real app login, upload, download, delete, tenant-positive/tenant-negative permissions, audit trail, journaling and rollback.
