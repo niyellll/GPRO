@@ -187,7 +187,7 @@ def inspect_tenant(source_cursor,target_cursor,tenant: str,
     }
 
 def claim_bucket_inventory(cursor,bucket: str) -> dict:
-    if bucket not in ("klarin-private-attachments","gpro-csb-private-attachments","gpp-klarin-attachments"):
+    if bucket not in ("klarin-private-attachments","gpro-csb-private-attachments","gpp-klarin-attachments","gpro-gpp-private-attachments"):
         raise NoGo("Unexpected private Storage bucket")
     cursor.execute("""
        SELECT b.public,count(o.id)::bigint,
@@ -216,7 +216,7 @@ def dedicated_role_credentials(cursor, roles: tuple[str,...]) -> dict:
 
 def assemble_report(tenants: list[dict], finance_roles: dict, klarin_roles: dict,
                     source_files: dict,target_files: dict,
-                    gpp_stock_source_files: dict) -> dict:
+                    gpp_stock_source_files: dict,gpp_stock_target_files: dict) -> dict:
     business_drift=sum(len(t["business_drift"])+len(t["missing_target_tables"]) for t in tenants)
     acl_pass=all(t["acl_pass"] for t in tenants)
     db_data_pass=business_drift==0
@@ -225,6 +225,12 @@ def assemble_report(tenants: list[dict], finance_roles: dict, klarin_roles: dict
        and source_files["objects"]==target_files["objects"]
        and source_files["metadata_bytes"]==target_files["metadata_bytes"]
        and source_files["objects"]>0
+    )
+    gpp_bucket_metadata_parity=bool(
+       gpp_stock_source_files["private"] and gpp_stock_target_files["private"]
+       and gpp_stock_source_files["objects"]==gpp_stock_target_files["objects"]
+       and gpp_stock_source_files["metadata_bytes"]==gpp_stock_target_files["metadata_bytes"]
+       and gpp_stock_source_files["objects"]>0
     )
     return {
        "mode":"SEVEN_TO_TWO_READ_ONLY_LIVE_CENSUS",
@@ -241,6 +247,8 @@ def assemble_report(tenants: list[dict], finance_roles: dict, klarin_roles: dict
        "csb_storage_metadata_parity_pass":bucket_metadata_parity,
        # GPP Stock original private objects require independent target-byte proof.
        "gpp_stock_legacy_source_storage":gpp_stock_source_files,
+       "gpp_stock_target_storage":gpp_stock_target_files,
+       "gpp_stock_storage_metadata_parity_pass":gpp_bucket_metadata_parity,
        "gpp_stock_original_target_bytes_verified":False,
        "requires_external_independently_verified_proof":[
           "actual complete seven-project PostgreSQL restore",
@@ -287,8 +295,10 @@ def live_report() -> dict:
             target_files=claim_bucket_inventory(c,"gpro-csb-private-attachments")
         with conns["gpp_stock_old"].cursor() as c:
             gpp_stock_source_files=claim_bucket_inventory(c,"gpp-klarin-attachments")
+        with conns["klarin_base"].cursor() as c:
+            gpp_stock_target_files=claim_bucket_inventory(c,"gpro-gpp-private-attachments")
         return assemble_report(tenants,fr,kr,source_files,target_files,
-                               gpp_stock_source_files)
+                               gpp_stock_source_files,gpp_stock_target_files)
     except Exception:
         # psycopg exceptions can contain connection strings or private details.
         raise NoGo("Protected read-only reconciliation failed; inspect privately") from None
