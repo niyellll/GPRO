@@ -192,14 +192,16 @@ def claim_bucket_inventory(cursor,bucket: str) -> dict:
     cursor.execute("""
        SELECT b.public,count(o.id)::bigint,
          coalesce(sum(CASE WHEN o.metadata->>'size' ~ '^[0-9]+$'
-           THEN (o.metadata->>'size')::bigint ELSE 0 END),0)::bigint
+           THEN (o.metadata->>'size')::numeric ELSE 0 END),0),
+         count(o.id) FILTER (WHERE (o.metadata->>'size' ~ '^[0-9]+$') IS NOT TRUE)
        FROM storage.buckets b
        LEFT JOIN storage.objects o ON o.bucket_id=b.id
        WHERE b.id=%s GROUP BY b.public
     """,(bucket,))
     row=cursor.fetchone()
     if row is None: raise NoGo("Expected private Storage bucket missing")
-    return {"private":row[0] is False, "objects":int(row[1]),"metadata_bytes":int(row[2])}
+    return {"private":row[0] is False, "objects":int(row[1]),
+            "metadata_bytes":int(row[2]), "objects_without_valid_size":int(row[3])}
 
 def dedicated_role_credentials(cursor, roles: tuple[str,...]) -> dict:
     if not roles or any(not IDENT.fullmatch(r) for r in roles):
@@ -224,12 +226,14 @@ def assemble_report(tenants: list[dict], finance_roles: dict, klarin_roles: dict
        source_files["private"] and target_files["private"]
        and source_files["objects"]==target_files["objects"]
        and source_files["metadata_bytes"]==target_files["metadata_bytes"]
+       and source_files["objects_without_valid_size"]==target_files["objects_without_valid_size"]==0
        and source_files["objects"]>0
     )
     gpp_bucket_metadata_parity=bool(
        gpp_stock_source_files["private"] and gpp_stock_target_files["private"]
        and gpp_stock_source_files["objects"]==gpp_stock_target_files["objects"]
        and gpp_stock_source_files["metadata_bytes"]==gpp_stock_target_files["metadata_bytes"]
+       and gpp_stock_source_files["objects_without_valid_size"]==gpp_stock_target_files["objects_without_valid_size"]==0
        and gpp_stock_source_files["objects"]>0
     )
     return {
@@ -252,7 +256,8 @@ def assemble_report(tenants: list[dict], finance_roles: dict, klarin_roles: dict
        "gpp_stock_original_target_bytes_verified":False,
        "requires_external_independently_verified_proof":[
           "actual complete seven-project PostgreSQL restore",
-          "physical Storage original/target byte SHA256 and restore drill for CSB Klarin and GPP Stock",
+          "physical Storage backup and restore drill for all seven projects, including retained BBM buckets",
+          "original/target byte SHA256 for migrated CSB Klarin and GPP Stock objects",
           "signed business write freeze and final frozen snapshot",
           "five distinct least-privilege authenticated tenant login/writer E2E",
           "green unchanged application release quality gates and tested rollback",

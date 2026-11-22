@@ -37,8 +37,9 @@ def roles(n):
     return {"roles":n,"login_roles":n,"configured_credentials":n,
             "required":n,"pass":True}
 
-def files(objects=6,bytes_count=2918989):
-    return {"private":True,"objects":objects,"metadata_bytes":bytes_count}
+def files(objects=6,bytes_count=2918989,invalid_size=0):
+    return {"private":True,"objects":objects,"metadata_bytes":bytes_count,
+            "objects_without_valid_size":invalid_size}
 
 class TwoBaseLiveReadinessTests(unittest.TestCase):
     def test_exactly_two_base_and_five_legacy_project_pins(self):
@@ -143,10 +144,10 @@ class TwoBaseLiveReadinessTests(unittest.TestCase):
 
     def test_private_bucket_inventory_rejects_bbms_other_bucket(self):
         with self.assertRaises(gate.NoGo):
-            gate.claim_bucket_inventory(FakeCursor([(False,0,0)]),"bbm-private-files")
+            gate.claim_bucket_inventory(FakeCursor([(False,0,0,0)]),"bbm-private-files")
 
     def test_private_bucket_inventory_checks_only_metadata_not_file_bytes(self):
-        cursor=FakeCursor([(False,6,2918989)])
+        cursor=FakeCursor([(False,6,2918989,0)])
         self.assertEqual(gate.claim_bucket_inventory(cursor,
            "gpro-csb-private-attachments"),files())
         self.assertIn("storage.objects",cursor.last_query)
@@ -154,7 +155,7 @@ class TwoBaseLiveReadinessTests(unittest.TestCase):
         self.assertEqual(cursor.last_params,("gpro-csb-private-attachments",))
 
     def test_gpp_stock_private_source_inventory_included_without_fake_transfer(self):
-        cursor=FakeCursor([(False,2,4231865)])
+        cursor=FakeCursor([(False,2,4231865,0)])
         self.assertEqual(gate.claim_bucket_inventory(cursor,
             "gpp-klarin-attachments"),files(2,4231865))
         people=[tenant_result(x) for x in ("csb_finance","gpp_pusat",
@@ -167,7 +168,7 @@ class TwoBaseLiveReadinessTests(unittest.TestCase):
         self.assertFalse(report["cutover_ready"])
 
     def test_gpp_stock_dedicated_target_bucket_is_inspected_not_bbm(self):
-        target=FakeCursor([(False,0,0)])
+        target=FakeCursor([(False,0,0,0)])
         self.assertEqual(gate.claim_bucket_inventory(
             target,"gpro-gpp-private-attachments"),files(0,0))
         self.assertEqual(target.last_params,("gpro-gpp-private-attachments",))
@@ -188,6 +189,19 @@ class TwoBaseLiveReadinessTests(unittest.TestCase):
         self.assertFalse(matched_metadata["gpp_stock_original_target_bytes_verified"])
         self.assertFalse(matched_metadata["cutover_ready"])
         self.assertFalse(matched_metadata["delete_or_pause_legacy_projects"])
+
+    def test_equal_totals_with_missing_or_invalid_sizes_fail_both_parity_checks(self):
+        people=[tenant_result(x) for x in ("csb_finance","gpp_pusat",
+                     "gpp_cabang","csb_klarin","gpp_stock")]
+        bad_csb=gate.claim_bucket_inventory(FakeCursor([(False,6,2918989,1)]),
+                                            "gpro-csb-private-attachments")
+        bad_gpp=gate.claim_bucket_inventory(FakeCursor([(False,2,4231865,1)]),
+                                            "gpp-klarin-attachments")
+        report=gate.assemble_report(people,roles(3),roles(2),
+                                    files(),bad_csb,bad_gpp,files(2,4231865))
+        self.assertEqual(bad_csb["objects_without_valid_size"],1)
+        self.assertFalse(report["csb_storage_metadata_parity_pass"])
+        self.assertFalse(report["gpp_stock_storage_metadata_parity_pass"])
 
     def test_dedicated_login_role_gate_checks_real_password_presence(self):
         c=FakeCursor([(3,3,0)])
