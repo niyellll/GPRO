@@ -186,10 +186,21 @@ class SevenProjectPgBackupV3Tests(unittest.TestCase):
             calls.append(cmd)
             return subprocess.CompletedProcess(cmd,1,stdout="confidential",stderr="private-password")
         with patch.object(mod,"cli_major_v3",return_value="3.2.0"):
-            with self.assertRaises(mod.BackupBlocked):
+            with self.assertRaisesRegex(mod.BackupBlocked, "roles.sql: CLI exited with code 1") as raised:
                 mod.backup_all(synthetic_args(self.root),runner=failing_runner)
+        self.assertNotIn("private-password",str(raised.exception))
         self.assertEqual(len(calls),1)
         self.assertEqual(len(list(self.root.rglob("private-pg-export-manifest.json"))),0)
+
+    def test_timeout_reports_stage_without_subprocess_output(self):
+        def timeout_runner(cmd, **kwargs):
+            raise subprocess.TimeoutExpired(cmd, 900, stderr="private-password")
+
+        with patch.object(mod,"cli_major_v3",return_value="3.2.0"):
+            with self.assertRaisesRegex(mod.BackupBlocked, "roles.sql: CLI timed out after 900 seconds") as raised:
+                mod.backup_all(synthetic_args(self.root),runner=timeout_runner)
+        self.assertNotIn("private-password",str(raised.exception))
+        self.assertFalse(list(self.root.rglob("private-pg-export-manifest.json")))
 
     def test_cli_source_guards_do_not_touch_production_ddl(self):
         text=SCRIPT.read_text()
