@@ -46,6 +46,7 @@ NAME = re.compile(r"[a-zA-Z0-9_-]{8,80}\Z")
 CLI = re.compile(r"^\s*v?(3)\.(\d+)\.(\d+)(?:[-+][^\s]+)?\s*$")
 MAX_MANIFEST_BYTES = 1_000_000
 MIN_SQL_BYTES = 20
+DEFAULT_DUMP_TIMEOUT_SECONDS = 900
 
 
 class BackupBlocked(ValueError):
@@ -134,7 +135,7 @@ def report_progress(completed: int, status: str):
           file=sys.stderr, flush=True)
 
 
-def run_dump(runner, cmd, folder, dest, completed, stage):
+def run_dump(runner, cmd, folder, dest, completed, stage, timeout_seconds):
     started = monotonic()
     finished = Event()
 
@@ -146,14 +147,14 @@ def run_dump(runner, cmd, folder, dest, completed, stage):
                 size = 0
             report_progress(completed, f"{stage}: CLI running {int(monotonic() - started)}s, {size} bytes on disk")
 
-    report_progress(completed, f"{stage}: starting CLI")
+    report_progress(completed, f"{stage}: starting CLI (timeout {timeout_seconds}s)")
     reporter = Thread(target=heartbeat, daemon=True)
     reporter.start()
     try:
         return runner(cmd, cwd=folder, capture_output=True, text=True,
-                      timeout=900, check=False)
+                      timeout=timeout_seconds, check=False)
     except subprocess.TimeoutExpired:
-        raise BackupBlocked(f"{stage}: CLI timed out after 900 seconds") from None
+        raise BackupBlocked(f"{stage}: CLI timed out after {timeout_seconds} seconds") from None
     except OSError:
         raise BackupBlocked(f"{stage}: unable to run CLI") from None
     finally:
@@ -162,6 +163,9 @@ def run_dump(runner, cmd, folder, dest, completed, stage):
 
 
 def backup_all(args, runner=subprocess.run):
+    timeout_seconds=args.dump_timeout_seconds
+    if timeout_seconds <= 0:
+        raise BackupBlocked("Dump timeout must be positive")
     if (not args.approved_change_ref or not args.approved_change_ref.strip()
         or not args.confirm_private_encrypted
         or not args.confirm_operator_owns_all_seven
@@ -191,7 +195,7 @@ def backup_all(args, runner=subprocess.run):
                     raise BackupBlocked("Refusing to overwrite existing SQL file")
                 cmd=backup_command(ref,filename,dest)
                 stage=f"{ref} {filename}"
-                result=run_dump(runner,cmd,folder,dest,completed,stage)
+                result=run_dump(runner,cmd,folder,dest,completed,stage,timeout_seconds)
                 if result.returncode != 0:
                     # Never print the CLI's stdout/stderr, which might contain DSNs.
                     raise BackupBlocked(f"{stage}: CLI exited with code {result.returncode}")
@@ -292,6 +296,8 @@ def parser():
     group.add_argument("--backup-pg",action="store_true")
     group.add_argument("--verify-private",default="",metavar="PRIVATE_RUN_DIR")
     p.add_argument("--backup-root",default="")
+    p.add_argument("--dump-timeout-seconds",type=int,default=DEFAULT_DUMP_TIMEOUT_SECONDS,
+                   help="maximum duration of each CLI dump in seconds (default: %(default)s)")
     p.add_argument("--approved-change-ref",default="")
     p.add_argument("--confirm-private-encrypted",action="store_true")
     p.add_argument("--confirm-operator-owns-all-seven",action="store_true")

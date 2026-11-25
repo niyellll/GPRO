@@ -28,6 +28,7 @@ FAKE_SQL=b"-- Synthetic PostgreSQL SQL dump only --\nSELECT 1;\n"
 def synthetic_args(root: Path, **patches):
     values=dict(backup_pg=True,verify_private="",backup_root=str(root),
                 approved_change_ref="fake-owner-ticket-test-only",
+                dump_timeout_seconds=mod.DEFAULT_DUMP_TIMEOUT_SECONDS,
                 confirm_private_encrypted=True,
                 confirm_operator_owns_all_seven=True)
     values.update(patches)
@@ -194,11 +195,12 @@ class SevenProjectPgBackupV3Tests(unittest.TestCase):
 
     def test_timeout_reports_stage_without_subprocess_output(self):
         def timeout_runner(cmd, **kwargs):
-            raise subprocess.TimeoutExpired(cmd, 900, stderr="private-password")
+            self.assertEqual(kwargs["timeout"],7200)
+            raise subprocess.TimeoutExpired(cmd, kwargs["timeout"], stderr="private-password")
 
         with patch.object(mod,"cli_major_v3",return_value="3.2.0"):
-            with self.assertRaisesRegex(mod.BackupBlocked, "roles.sql: CLI timed out after 900 seconds") as raised:
-                mod.backup_all(synthetic_args(self.root),runner=timeout_runner)
+            with self.assertRaisesRegex(mod.BackupBlocked, "roles.sql: CLI timed out after 7200 seconds") as raised:
+                mod.backup_all(synthetic_args(self.root,dump_timeout_seconds=7200),runner=timeout_runner)
         self.assertNotIn("private-password",str(raised.exception))
         self.assertFalse(list(self.root.rglob("private-pg-export-manifest.json")))
 
